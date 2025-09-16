@@ -132,7 +132,7 @@ class Adapter:
 
         callback = None
 
-        if post_type == "message":
+        if post_type == "message" or post_type == "message_sent":
             message_type: Literal["private", "group"] = message.get("message_type")
             if message_type == "private":
                 event = PrivateMessageEvent(message)
