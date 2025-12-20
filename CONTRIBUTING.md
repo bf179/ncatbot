@@ -1,110 +1,85 @@
 # 贡献指南
 
-欢迎参与 NcatBot 项目！我们致力于打造一个友好的开源社区，以下是参与 NcatBot 项目本体贡献的规范流程。
+本文件仅面向开发者，说明从 fork 到提交 PR 的必要步骤。假定你已经将仓库 fork 到自己的 GitHub 账号，并从自己的 fork 克隆到本地。
 
-## 📌 开始之前
+## 贡献步骤
 
-1. 确认项目采用
-2. 阅读 [项目文档](README.md)
-3. 加入开发者交流群：`201487478`
+1. Fork 本仓库
+2. clone 你 Fork 的仓库到本地
+3. 准备开发环境
+4. 开发并测试
+5. 启用 pre-commit 钩子检查并提交
+6. 推送到你自己 Fork 的 Repo
+7. 开 Pull Request
 
-## 🌱 开发流程
 
-### 分支管理
+## 环境准备
+
+### clone 到本地
 
 ```bash
-git clone https://github.com/liyihao1110/ncatbot
-git checkout -b feat/Function-development  # 功能开发分支
-# 或
-git checkout -b fix/issue-fix         # 问题修复分支
+git clone https://github.com/<你的用户名>/ncatbot.git
+cd ncatbot
 ```
 
-### pre-commit 钩子
-
-本项目使用 `pre-commit` 框架自动检查代码质量和规范，每次提交时自动运行。
-
-#### 安装步骤
+### 准备开发环境
 
 ```bash
-# 1. 安装 pre-commit（首次）
-pip install pre-commit
+python -m venv .venv
+. .venv/bin/activate
+pip install -e '.[dev]'
+```
 
-# 2. 在项目根目录安装 git 钩子
+### 启用 pre-commit 钩子（只需执行一次）
+
+```bash
 pre-commit install
+```
+- pre-commit 会在 `git commit` 时检查代码格式并做一定自动修复。若 pre-commit 自动修复了文件，请执行 `git add` 将修复后的文件重新暂存后再提交。
+- 如果存在无法自动修复的错误，请尽量认真阅读错误描述并修复。若确有必要跳过本地检查（不推荐），可使用 `git commit --no-verify`。
 
-# 3. 验证所有文件（可选）
-pre-commit run --all-files
+## 开发
+
+
+- 新建分支进行开发：
+
+```bash
+git checkout -b feat/描述性短名
 ```
 
-#### 检查规范
+- 使用 [Conventional Commits](https://www.conventionalcommits.org/zh-hans/v1.0.0/) 编写提交信息，例如：
 
-启用后将自动检查以下内容：
-
-1. **代码检查与格式化**
-   - `ruff`：Python 代码检查和自动修复
-   - `ruff-format`：代码格式化（遵循 PEP8 规范）
-
-2. **拼写检查**
-   - `codespell`：检查文本中的拼写错误
-
-3. **文件规范**
-   - 移除行尾空白
-   - 文件结尾确保为单个换行符
-   - 混合行尾修复
-
-4. **安全检查**
-   - 检测私钥文件（防止泄露敏感信息）
-   - 检测调试语句
-   - 检查符号链接完整性
-
-5. **配置文件验证**
-   - YAML 文件格式检查
-   - TOML 文件格式检查
-
-6. **Python 语法检查**
-   - 验证 Python 代码的 AST 有效性
-
-提交前如需跳过钩子检查，使用 `git commit --no-verify`
-
-每次提交（commit）代码时， pre-commit 会自动运行配置的检查工具，如代码格式化、类型检查等，确保代码符合项目规范。并自动修复一些简单的问题。**你需要手动再次执行 `git add` 来添加修复后的文件。**
-
-如果存在 `pre-commit` 无法自动修复的问题，应该手动修复后再提交。如果确认代码无误，可以在 commit 时添加 `--no-verify` 参数跳过检查，但不建议频繁使用。
-
-### 提交规范
-
-采用 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
 ```bash
 git commit -m "feat: 添加消息撤回功能"
 git commit -m "fix(api): 修复消息队列溢出问题 #123"
 git commit -m "docs: 更新安装指南"
 ```
-### Pull Request
 
-1. 推送分支到远程仓库
-2. 在 Github 创建 Pull Request
-3. 关联相关 Issue（如 `#123`）
+## 测试
 
-## 🧪 测试要求
+- 请手动测试你修改过的部分。
+- 未来将引入规范化的集成测试和单元测试。
 
-所有代码修改必须通过测试。
+## 提交 PR
 
-后续我们将引入标准的测试框架，目前请确保手动测试你增加的功能。
 
-## 🖋 代码规范
-
-1. 遵循 PEP8 规范
-2. **必须添加类型提示**：
-```python
-def send_message(content: str, group_id: int) -> MessageResult:
-    ...
+```bash
+git push origin feat/描述性短名
 ```
-3. 文档字符串标准：
+
+- 在 GitHub 上为上游仓库创建 Pull Request（目标仓库为原始仓库），在说明里写明变更内容并关联 Issue（如有）。
+
+## 代码规范
+
+代码规范（要点）
+- 遵循 PEP8，**尽量添加类型注解**。
+- 必要时添加清晰的 docstring，例如：
+
 ```python
 def handle_event(event: Event):
-    """处理机器人事件
+    """处理机器人事件。
+
     Args:
-        event: 继承自BaseEvent的事件对象
-    Returns:
-        无返回值，可能产生副作用
+        event: 继承自 BaseEvent 的事件对象。
     """
 ```

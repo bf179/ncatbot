@@ -13,7 +13,7 @@ on:
     branches:
       - main  # 指定触发的分支，根据实际情况修改
     paths:
-      - "ncatbot/__init__.py"  # 只有当 __init__.py 文件发生变化时触发
+      - "pyproject.toml"  # 当 pyproject.toml 文件发生变化时触发
   workflow_dispatch:  # 允许手动触发
 
 permissions:

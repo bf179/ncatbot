@@ -17,15 +17,14 @@
 
 [文档](https://docs.ncatbot.xyz) | [许可证](LICENSE) | [QQ群](https://qm.qq.com/q/AmdNUkSxFY) | [插件社区](https://www.ityzs.com/)
 
-NcatBot 是基于 onebot11协议 的 Python SDK, 它提供了一套方便易用的 Python 接口用于开发 QQ 机器人.
+NcatBot 是基于 OneBot11 协议的 Python SDK，它提供了一套方便易用的 Python 接口，用于开发 QQ 机器人。
 
 </div>
 
 
 ## 如何使用
 
-
-认真阅读本项目[文档](https://docs.ncatbot.xyz)
+请认真阅读本项目的[文档](https://docs.ncatbot.xyz)。
 
 ## 欢迎来玩
 
@@ -33,38 +32,40 @@ NcatBot 是基于 onebot11协议 的 Python SDK, 它提供了一套方便易用�
 
 ## 获取帮助
 
-- 遇到任何困难时, 请先按照以下顺序尝试自己解决:
+-- 遇到任何困难时，请先按照以下顺序尝试解决：
 
   1. **仔细阅读**[文档](https://docs.ncatbot.xyz).
-  2. 询问 [DeepSeek](https://chat.deepseek.com), [Kimi](https://kimi.ai) 等人工智能.
+  2. 询问 [Gemini](https://gemini.google.com/), [Kimi](https://kimi.ai) 等人工智能.
   3. 搜索本项目的 [Issue 列表](https://github.com/liyihao1110/ncatbot/issues).
-- 如果以上方法都无法解决你的问题, 那么:
-
-  可以[进群](https://qm.qq.com/q/L6XGXYqL86)提问.
+-- 如果以上方法都无法解决你的问题，那么：
+  1. 在 [Issue 列表](https://github.com/liyihao1110/ncatbot/issues) 发 Issue 求助。
+  2. [进群](https://qm.qq.com/q/L6XGXYqL86)提问。
 
 ## 联系我们
 
-作者: [最可爱的木子喵~](https://gitee.com/li-yihao0328)
+作者： [最可爱的木子喵~](https://gitee.com/li-yihao0328)
 
-邮箱: <lyh_02@foxmail.com>
+邮箱： <lyh_02@foxmail.com>
 
 
 ## 使用限制
 
-1. **严禁将本项目以任何形式用于传播 反动、暴力、淫秽 信息，违者将追究法律责任**.
-2. 将本项目以**任何形式**用于**盈利性用途**时，必须取得项目开发组(本仓库 Collaborators 和 Owner)的**书面授权**.
-
+1. **严禁将本项目以任何形式用于传播淫秽、反动或暴力等信息。**
+2. **未经授权，禁止将本项目以任何形式用于盈利。**
 
 ## 致谢
 
-感谢 [NapCat](https://github.com/NapNeko/NapCatQQ) 提供底层接口 | [IppClub](https://github.com/IppClub) 的宣传支持 | [Fcatbot](https://github.com/Fish-LP/Fcatbot) 提供代码和灵感.
+感谢 [NapCat](https://github.com/NapNeko/NapCatQQ) 提供底层接口 | [IppClub](https://github.com/IppClub) 的宣传支持 | [Fcatbot](https://github.com/Fish-LP/Fcatbot) 提供代码和灵感。
 
-感谢 [扶摇互联](https://www.fyyun.net/) | [林枫云](https://www.dkdun.cn/) 提供服务器支持.
+感谢 [林枫云](https://www.dkdun.cn/) 提供服务器支持。
 
 ## 参与贡献
-欢迎通过 Issue 或 Pull Request 参与项目开发！请先阅读 [贡献指南](CONTRIBUTING.md)。
 
-如果你在使用过程中遇到任何问题，欢迎在 [GitHub Issues](https://github.com/liyihao1110/ncatbot/issues) 中反馈。感谢你的支持！
+如果在你使用过程中遇到问题，或有任何建议，欢迎在 [GitHub Issues](https://github.com/liyihao1110/ncatbot/issues) 中反馈。
+
+欢迎给本 Repo 贡献代码！请先阅读 [贡献指南](CONTRIBUTING.md)。
+
+感谢你的支持！
 
 
 <div align="center">

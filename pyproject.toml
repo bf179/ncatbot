@@ -1,4 +1,65 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-requires-python = ">=3.8"
+requires = ["setuptools>=61.0", "setuptools_scm[toml]>=7.1", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "ncatbot"
+version = "4.5.0-dev1"
+description = "NcatBot, NapCat Python SDK"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [ { name = "木子", email = "lyh_02@qq.com" }, { name = "huan-yp", email = "huan_yp@qq.com"} ]
+urls = { "Source" = "https://github.com/liyihao1110/ncatbot", "Bug Reports" = "https://github.com/liyihao1110/ncatbot/issues", "Documentation" = "https://github.com/liyihao1110/ncatbot/wiki" }
+requires-python = ">=3.8"
+dependencies = [
+  "toml",
+  "qrcode",
+  "schedule",
+  "urllib3",
+  "websockets",
+  "packaging",
+  "rich",
+  "aiofiles",
+  "typing-extensions",
+  "colorama>=0.4.6; platform_system == \"Windows\"",
+  "importlib-metadata>=8.6.1; python_version >= '3.9'",
+  "importlib-metadata>=4.0; python_version < '3.9'",
+  "httpx>=0.28.1",
+  "psutil>=6.1.1",
+  "pyyaml>=6.0.2",
+  "requests>=2.32.3",
+  "tqdm>=4.67.1",
+]
+
+[project.optional-dependencies]
+# Dependencies useful for development and testing. Install with:
+#   pip install '.[dev]' or '.[test]'
+dev = [
+  "build",
+  "twine",
+  "tox>=4.0",
+  "tox-uv",
+  "uv",
+  "pytest",
+  "pytest-cov",
+  "pre-commit",
+  "black",
+  "ruff",
+  "mypy",
+  "isort",
+]
+test = [
+  "pytest",
+  "pytest-cov",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ncatbot", "ncatbot.*"]
+
+[tool.setuptools_scm]
+# write the computed version into a small source file so the package can expose it
+write_to = "ncatbot/_version.py"
+write_to_template = "__version__ = \"{version}\"\n"
+fallback_version = "0+unknown"
+tag_regex = "^(?P<prefix>v)?(?P<version>\\d+\\.\\d+\\.\\d+.*)$"
