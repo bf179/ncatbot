@@ -165,9 +165,12 @@ def create_plugin_template(
             },
             "__init__.py": {
                 "from .main import Plugin": f"from .main import {name}",
-                '__all__ = ["Plugin"]': f'__all__ = ["{name}"]',
             },
             "README.md": {
+                "Plugin Name": name,
+                "Your Name": author,
+            },
+            "manifest.toml": {
                 "Plugin Name": name,
                 "Your Name": author,
             },

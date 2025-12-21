@@ -6,13 +6,10 @@ from ncatbot.plugin_system import command_registry
 
 
 class Plugin(NcatBotPlugin):
-    """Plugin class."""
+    """Plugin class.
 
-    name = "Plugin Name"  # 插件名称
-    version = "0.1.0"  # 插件版本
-    author = "Your Name"  # 插件作者
-    info = "这是一个示例插件，用于演示插件系统的基本功能"  # 插件描述
-    dependencies = {}  # 插件依赖，格式: {"插件名": "版本要求"}
+    注意：插件元数据由顶层 `manifest.toml` 提供（不要在类中声明元数据）。
+    """
 
     async def on_load(self):
         """插件加载时执行的操作."""

@@ -55,7 +55,7 @@ class BasePlugin:
         main_file (Path): 插件主文件路径
     """
 
-    # -------- 插件元数据 --------
+    # -------- 插件元数据 (外部注入的属性) --------
     name: str
     version: str
     author: str = "Unknown"
@@ -99,18 +99,18 @@ class BasePlugin:
         Raises:
             ValueError: 如果未定义name或version属性
         """
-        # 基础校验
-        if not getattr(self, "name", None):
-            raise ValueError(f"{self.__class__.__name__} 必须定义 name 属性")
-        if not getattr(self, "version", None):
-            raise ValueError(f"{self.__class__.__name__} 必须定义 version 属性")
-
-        # 保存外部注入
+        # 保存外部注入（先注入 extras，这样 loader 可以在实例化时传入 name/version）
         self._event_bus = event_bus
         self._loader = plugin_loader
         self._debug = debug
         for k, v in extras.items():
             setattr(self, k, v)
+
+        # 基础校验（在 extras 注入后检查 name/version）
+        if not getattr(self, "name", None):
+            raise ValueError(f"{self.__class__.__name__} 必须定义 name 属性")
+        if not getattr(self, "version", None):
+            raise ValueError(f"{self.__class__.__name__} 必须定义 version 属性")
 
         # 初始化属性
         self.api = status.global_api

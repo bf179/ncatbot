@@ -1,0 +1,11 @@
+name = "Plugin Name" # 必须
+version = "0.1.0" # 必须
+main = "main.py" # 必须, 声明需要去插件目录下的哪个文件找插件主类
+author = "Your Name" # 可选
+description = "This is a template plugin for NcatBot" # 可选
+entry_class = "Plugin" # 可选, 声明插件主类名, 不声明默认使用找到的第一个 BasePlugin 的子类
+
+[dependencies] # 依赖的其他插件
+# other_plugin = ">=1.0"
+
+pip_dependencies = [] # 依赖的 pip 第三方库
