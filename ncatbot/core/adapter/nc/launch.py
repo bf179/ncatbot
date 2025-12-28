@@ -23,7 +23,7 @@ from .start import start_napcat
 from ....utils import ncatbot_config, get_log, run_coroutine
 from ....utils import NcatBotError
 
-LOG = get_log("ncatbot.core.adapter.nc.launch")
+LOG = get_log("launch")
 
 
 class NcatBotLoginError(NcatBotError):
