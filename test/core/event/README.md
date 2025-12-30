@@ -7,7 +7,6 @@
 ```
 test/core/event/
 ├── conftest.py          # pytest 配置和测试数据加载器
-├── data.txt             # 真实的测试数据（从日志提取）
 ├── test_base.py         # base.py 模块测试
 ├── test_primitives.py   # primitives.py 模块测试  
 ├── test_media.py        # media.py 模块测试
@@ -18,6 +17,23 @@ test/core/event/
 ```
 
 ## 测试数据管理
+
+### 数据源配置
+
+测试框架按以下优先级查找数据文件：
+
+1. **环境变量** `NCATBOT_TEST_DATA_FILE` - 可指定自定义数据文件路径
+2. **默认路径** `dev/data.txt` - 项目根目录的 dev 文件夹
+
+**如果找不到数据文件**：依赖真实数据的测试将自动跳过（不会导致测试失败）
+
+```bash
+# 使用自定义数据文件路径
+NCATBOT_TEST_DATA_FILE=/path/to/your/data.txt pytest test/core/event/ -v
+
+# 使用相对路径（相对于项目根目录）
+NCATBOT_TEST_DATA_FILE=logs/my_events.txt pytest test/core/event/ -v
+```
 
 ### 数据格式
 
@@ -32,7 +48,7 @@ test/core/event/
 
 ### 添加新测试数据
 
-只需将新的测试数据添加到 `data.txt` 文件中，测试框架会自动加载并解析。
+只需将新的测试数据添加到 `dev/data.txt` 文件中，测试框架会自动加载并解析。
 
 ## 测试数据提供器
 
@@ -106,12 +122,11 @@ uv run pytest test/core/event/ --cov=ncatbot.core.event.message_event.types
 
 ### 添加新的测试数据
 
-1. 将新的日志行或事件数据添加到 `data.txt`
-2. 或创建新的 `.txt` 文件（会自动加载）
-3. 运行测试验证数据能正确解析
+1. 将新的日志行或事件数据添加到 `dev/data.txt`
+2. 运行测试验证数据能正确解析
 
 ## 注意事项
 
 - 测试数据中的省略内容（如 `[...]`）会被自动处理
 - 支持 Python 格式（单引号）和 JSON 格式（双引号）的数据
-- 某些测试在没有对应类型数据时会自动跳过
+- **数据不可用时**：依赖真实数据的测试会自动跳过，不影响其他测试

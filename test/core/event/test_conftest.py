@@ -6,50 +6,42 @@ from pathlib import Path
 
 import pytest
 
-from conftest import extract_event_dict_str, parse_event_dict_str, load_test_data
+from conftest import parse_event_dict_str, load_test_data, _extract_dict_from_position
 
 
-class TestExtractEventDictStr:
-    """测试事件字典字符串提取"""
+class TestExtractDictFromPosition:
+    """测试字典字符串提取"""
     
-    def test_extract_simple_single_line(self):
-        """测试从单行日志中提取字典"""
-        log = "收到事件: {'type': 'text', 'data': 'hello'}"
-        result = extract_event_dict_str(log)
+    def test_extract_simple(self):
+        """测试从简单字符串中提取字典"""
+        line = "prefix {'type': 'text', 'data': 'hello'} suffix"
+        result = _extract_dict_from_position(line, line.find('{'))
         assert result is not None
         assert result == "{'type': 'text', 'data': 'hello'}"
     
-    def test_extract_multiline(self):
-        """测试从多行日志中提取字典"""
-        log = """收到事件: {'type': 'message', 'data': {
-            'text': 'hello',
-            'nested': {'key': 'value'}
-        }}"""
-        result = extract_event_dict_str(log)
-        assert result is not None
-        # 应该能正确匹配所有括号
-        assert result.count('{') == result.count('}')
-    
-    def test_extract_with_string_containing_braces(self):
-        """测试从包含字符串中有大括号的日志中提取"""
-        log = "收到事件: {'type': 'text', 'pattern': '{hello}'}"
-        result = extract_event_dict_str(log)
-        assert result is not None
-        assert result == "{'type': 'text', 'pattern': '{hello}'}"
-    
-    def test_extract_no_event(self):
-        """测试没有事件的日志"""
-        log = "这是一条普通的日志消息"
-        result = extract_event_dict_str(log)
-        assert result is None
-    
     def test_extract_nested_dicts(self):
         """测试包含嵌套字典的提取"""
-        log = "收到事件: {'outer': {'inner': {'deep': 'value'}}}"
-        result = extract_event_dict_str(log)
+        line = "{'outer': {'inner': {'deep': 'value'}}}"
+        result = _extract_dict_from_position(line, 0)
         assert result is not None
         assert result.count('{') == 3
         assert result.count('}') == 3
+    
+    def test_extract_with_string_containing_braces(self):
+        """测试从包含字符串中有大括号的日志中提取"""
+        line = "{'type': 'text', 'pattern': '{hello}'}"
+        result = _extract_dict_from_position(line, 0)
+        assert result is not None
+        assert result == "{'type': 'text', 'pattern': '{hello}'}"
+    
+    def test_extract_from_log_line(self):
+        """测试从日志行中提取"""
+        line = "[2025-12-30 13:27:22] DEBUG | {'id': 123, 'type': 'test'} more text"
+        brace_start = line.find('{')
+        result = _extract_dict_from_position(line, brace_start)
+        assert result is not None
+        parsed = parse_event_dict_str(result)
+        assert parsed["id"] == 123
 
 
 class TestParseEventDictStr:
@@ -103,35 +95,27 @@ class TestParseEventDictStr:
 class TestLoadTestData:
     """测试完整的数据加载流程"""
     
-    def test_load_from_test_file(self):
-        """测试从实际测试数据文件加载"""
-        data_file = Path(__file__).parent / "data.txt"
-        if not data_file.exists():
-            pytest.skip("Test data file not found")
+    def test_load_from_dev_data_file(self, data_provider):
+        """测试从 dev/data.txt 加载数据"""
+        if not data_provider.has_data:
+            pytest.skip("测试数据文件不可用")
         
-        events = load_test_data(data_file)
-        assert len(events) > 0, "应该加载至少一个事件"
+        assert len(data_provider.all_events) > 0, "应该加载至少一个事件"
     
-    def test_loaded_events_have_post_type(self):
+    def test_loaded_events_have_post_type(self, data_provider):
         """测试加载的事件都有 post_type 字段"""
-        data_file = Path(__file__).parent / "data.txt"
-        if not data_file.exists():
-            pytest.skip("Test data file not found")
+        if not data_provider.has_data:
+            pytest.skip("测试数据文件不可用")
         
-        events = load_test_data(data_file)
-        for event in events:
-            assert "post_type" in event or "meta_event_type" in event, \
-                "事件应该有 post_type 或 meta_event_type 字段"
+        for event in data_provider.all_events:
+            assert "post_type" in event, "事件应该有 post_type 字段"
     
-    def test_can_parse_message_events(self):
+    def test_can_parse_message_events(self, data_provider):
         """测试能正确解析消息事件"""
-        data_file = Path(__file__).parent / "data.txt"
-        if not data_file.exists():
-            pytest.skip("Test data file not found")
+        if not data_provider.has_data:
+            pytest.skip("测试数据文件不可用")
         
-        events = load_test_data(data_file)
-        message_events = [e for e in events if e.get("post_type") == "message"]
-        
+        message_events = data_provider.message_events
         if message_events:
             for event in message_events:
                 assert "message" in event, "消息事件应该有 message 字段"
@@ -144,10 +128,11 @@ class TestDataParsingRobustness:
     def test_extract_and_parse_roundtrip(self):
         """测试提取-解析的往返"""
         original_dict = {'type': 'message', 'data': {'text': 'hello', 'id': 123}}
-        log = f"[LOG] 收到事件: {original_dict}"
+        line = f"[LOG] prefix {original_dict} suffix"
         
         # 提取
-        dict_str = extract_event_dict_str(log)
+        brace_start = line.find('{')
+        dict_str = _extract_dict_from_position(line, brace_start)
         assert dict_str is not None
         
         # 解析
@@ -156,18 +141,16 @@ class TestDataParsingRobustness:
     
     def test_handle_escaped_quotes(self):
         """测试处理转义引号"""
-        # 包含转义引号的字符串
         dict_str = r"{'message': 'He said \"hello\"', 'type': 'text'}"
         result = parse_event_dict_str(dict_str)
-        # 这可能无法完美处理，但至少不应该崩溃
-        # 如果解析失败是正常的
         if result:
             assert "message" in result or "type" in result
     
     def test_extract_with_surrounding_text(self):
         """测试从包含其他文本的日志中提取"""
-        log = """[2025-12-30 13:27:22,075.075] DEBUG Adapter | 收到事件: {'id': 123, 'name': 'test', 'nested': {'key': 'value'}} more text after"""
-        result = extract_event_dict_str(log)
+        line = "[2025-12-30 13:27:22,075.075] DEBUG Adapter | {'id': 123, 'name': 'test', 'nested': {'key': 'value'}} more text after"
+        brace_start = line.find('{')
+        result = _extract_dict_from_position(line, brace_start)
         assert result is not None
         parsed = parse_event_dict_str(result)
         assert parsed is not None

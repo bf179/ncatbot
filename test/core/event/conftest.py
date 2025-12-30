@@ -3,59 +3,21 @@ pytest 配置文件，提供测试夹具和数据加载器
 """
 import ast
 import json
-import re
+import os
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pytest
 
+# 默认数据文件路径（相对于项目根目录）
+DEFAULT_DATA_FILE = "dev/data.txt"
 
-def extract_event_dict_str(log_content: str) -> str | None:
-    """从日志内容中提取事件字典字符串
-    
-    处理可能跨越多行的 JSON/Dict 结构，
-    匹配 "收到事件: {...}" 格式，返回大括号内的完整内容
-    """
-    # 查找日志前缀
-    match = re.search(r"收到事件: (\{)", log_content)
-    if not match:
-        return None
-    
-    # 找到第一个 { 的位置
-    start_pos = match.start(1)
-    
-    # 从该位置开始，计算括号匹配，找到对应的 }
-    brace_count = 0
-    in_string = False
-    escape_next = False
-    
-    for i in range(start_pos, len(log_content)):
-        char = log_content[i]
-        
-        if escape_next:
-            escape_next = False
-            continue
-        
-        if char == '\\':
-            escape_next = True
-            continue
-        
-        if char == '"' and not in_string:
-            in_string = True
-        elif char == '"' and in_string:
-            in_string = False
-        elif char == "'" and not in_string:
-            in_string = True
-        elif char == "'" and in_string:
-            in_string = False
-        elif char == '{' and not in_string:
-            brace_count += 1
-        elif char == '}' and not in_string:
-            brace_count -= 1
-            if brace_count == 0:
-                return log_content[start_pos:i+1]
-    
-    return None
+# 环境变量名，用于指定自定义数据文件路径
+DATA_FILE_ENV_VAR = "NCATBOT_TEST_DATA_FILE"
+
+# 全局标记：数据是否可用
+_data_file_path: Optional[Path] = None
+_data_available: Optional[bool] = None
 
 
 def parse_event_dict_str(data_str: str) -> Dict[str, Any] | None:
@@ -80,49 +42,128 @@ def parse_event_dict_str(data_str: str) -> Dict[str, Any] | None:
     return None
 
 
-def load_test_data(data_file: Path) -> List[Dict[str, Any]]:
-    """加载测试数据文件，支持多行日志格式
+def _find_project_root() -> Path:
+    """查找项目根目录（包含 pyproject.toml 或 setup.py 的目录）"""
+    current = Path(__file__).resolve().parent
+    while current != current.parent:
+        if (current / "pyproject.toml").exists() or (current / "setup.py").exists():
+            return current
+        current = current.parent
+    # 如果找不到，使用 conftest.py 的上三级目录作为默认值
+    return Path(__file__).resolve().parent.parent.parent.parent
+
+
+def _resolve_data_file() -> Optional[Path]:
+    """解析数据文件路径
     
-    读取整个文件，按 "收到事件:" 标记分割事件，
-    然后解析每个事件的字典数据
+    优先级：
+    1. 环境变量 NCATBOT_TEST_DATA_FILE 指定的路径
+    2. 默认路径 dev/data.txt
+    
+    Returns:
+        数据文件路径，如果找不到则返回 None
+    """
+    global _data_file_path, _data_available
+    
+    # 如果已经解析过，直接返回缓存结果
+    if _data_available is not None:
+        return _data_file_path
+    
+    project_root = _find_project_root()
+    
+    # 1. 检查环境变量
+    env_path = os.environ.get(DATA_FILE_ENV_VAR)
+    if env_path:
+        custom_path = Path(env_path)
+        if not custom_path.is_absolute():
+            custom_path = project_root / custom_path
+        if custom_path.exists() and custom_path.is_file():
+            _data_file_path = custom_path
+            _data_available = True
+            print(f"\n✓ 使用环境变量指定的数据文件: {custom_path}")
+            return _data_file_path
+        else:
+            print(f"\n✗ 环境变量指定的文件不存在: {custom_path}")
+    
+    # 2. 检查默认路径
+    default_path = project_root / DEFAULT_DATA_FILE
+    if default_path.exists() and default_path.is_file():
+        _data_file_path = default_path
+        _data_available = True
+        print(f"\n✓ 使用默认数据文件: {default_path}")
+        return _data_file_path
+    
+    # 3. 找不到数据文件
+    _data_available = False
+    _data_file_path = None
+    print(f"\n✗ 未找到测试数据文件")
+    print(f"  默认路径: {default_path}")
+    print(f"  可通过环境变量 {DATA_FILE_ENV_VAR} 指定自定义路径")
+    print(f"  依赖真实数据的测试将被跳过\n")
+    return None
+
+
+def load_test_data(data_file: Path) -> List[Dict[str, Any]]:
+    """加载测试数据文件
+    
+    按行解析，查找包含 JSON/Dict 格式且含有 post_type 字段的事件数据
     """
     events = []
     
     with open(data_file, "r", encoding="utf-8") as f:
-        content = f.read()
-    
-    # 按 "收到事件:" 分割，但保留它作为前缀用于识别
-    # 找到所有 "收到事件:" 的位置
-    pattern = r"收到事件:"
-    matches = list(re.finditer(pattern, content))
-    
-    # 对每个匹配，提取从该位置到下一个日志起始的内容
-    for i, match in enumerate(matches):
-        start = match.start()
-        
-        # 确定结束位置：下一个日志的开始（通常以 [ 开头）
-        # 或者文件末尾
-        if i < len(matches) - 1:
-            # 找到下一个 "收到事件:" 前最后一个日志行的开始
-            next_start = matches[i + 1].start()
-            # 向后查找最后一个换行符
-            end = content.rfind('\n', start, next_start)
-            if end == -1:
-                end = next_start
-        else:
-            end = len(content)
-        
-        # 从 start 到 end 的内容
-        log_section = content[start:end]
-        
-        # 从该部分提取事件字典字符串
-        dict_str = extract_event_dict_str(log_section)
-        if dict_str:
-            event = parse_event_dict_str(dict_str)
-            if event:
-                events.append(event)
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            
+            # 查找行中的第一个 { 位置
+            brace_start = line.find('{')
+            if brace_start == -1:
+                continue
+            
+            # 从 { 开始提取完整的字典
+            dict_str = _extract_dict_from_position(line, brace_start)
+            if dict_str:
+                event = parse_event_dict_str(dict_str)
+                if event and isinstance(event, dict) and "post_type" in event:
+                    events.append(event)
     
     return events
+
+
+def _extract_dict_from_position(text: str, start_pos: int) -> str | None:
+    """从指定位置提取完整的字典字符串"""
+    brace_count = 0
+    in_string = False
+    escape_next = False
+    
+    for i in range(start_pos, len(text)):
+        char = text[i]
+        
+        if escape_next:
+            escape_next = False
+            continue
+        
+        if char == '\\':
+            escape_next = True
+            continue
+        
+        if char == '"' and not in_string:
+            in_string = True
+        elif char == '"' and in_string:
+            in_string = False
+        elif char == "'" and not in_string:
+            in_string = True
+        elif char == "'" and in_string:
+            in_string = False
+        elif char == '{' and not in_string:
+            brace_count += 1
+        elif char == '}' and not in_string:
+            brace_count -= 1
+            if brace_count == 0:
+                return text[start_pos:i+1]
+    
+    return None
 
 
 class TestDataProvider:
@@ -134,13 +175,24 @@ class TestDataProvider:
         self._message_events: List[Dict[str, Any]] = []
         self._meta_events: List[Dict[str, Any]] = []
         self._segments_by_type: Dict[str, List[Dict[str, Any]]] = {}
+        self._data_loaded = False
         self._load_all_data()
     
+    @property
+    def has_data(self) -> bool:
+        """检查是否有可用的测试数据"""
+        return self._data_loaded and len(self._events) > 0
+    
     def _load_all_data(self):
-        """加载 data_dir 下所有 .txt 文件的测试数据"""
-        for txt_file in self.data_dir.glob("*.txt"):
-            events = load_test_data(txt_file)
+        """加载测试数据
+        
+        优先从 dev/data.txt 加载，找不到则标记为无数据
+        """
+        data_file = _resolve_data_file()
+        if data_file:
+            events = load_test_data(data_file)
             self._events.extend(events)
+            self._data_loaded = True
         
         # 分类事件
         for event in self._events:
@@ -201,43 +253,63 @@ def data_provider(test_data_dir: Path) -> TestDataProvider:
     return TestDataProvider(test_data_dir)
 
 
+def _skip_if_no_data(data: List) -> None:
+    """如果数据为空则跳过测试"""
+    if not data:
+        pytest.skip("测试数据不可用 - 请设置 NCATBOT_TEST_DATA_FILE 环境变量或确保 dev/data.txt 存在")
+
+
 @pytest.fixture
 def text_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """文本消息段数据"""
-    return data_provider.get_segments_by_type("text")
+    """文本消息段数据（无数据时自动跳过测试）"""
+    segments = data_provider.get_segments_by_type("text")
+    _skip_if_no_data(segments)
+    return segments
 
 
 @pytest.fixture
 def image_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """图片消息段数据"""
-    return data_provider.get_segments_by_type("image")
+    """图片消息段数据（无数据时自动跳过测试）"""
+    segments = data_provider.get_segments_by_type("image")
+    _skip_if_no_data(segments)
+    return segments
 
 
 @pytest.fixture
 def face_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """表情消息段数据"""
-    return data_provider.get_segments_by_type("face")
+    """表情消息段数据（无数据时自动跳过测试）"""
+    segments = data_provider.get_segments_by_type("face")
+    _skip_if_no_data(segments)
+    return segments
 
 
 @pytest.fixture
 def at_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """@消息段数据"""
-    return data_provider.get_segments_by_type("at")
+    """@消息段数据（无数据时自动跳过测试）"""
+    segments = data_provider.get_segments_by_type("at")
+    _skip_if_no_data(segments)
+    return segments
 
 
 @pytest.fixture
 def reply_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """引用回复消息段数据"""
-    return data_provider.get_segments_by_type("reply")
+    """引用回复消息段数据（无数据时自动跳过测试）"""
+    segments = data_provider.get_segments_by_type("reply")
+    _skip_if_no_data(segments)
+    return segments
 
 
 @pytest.fixture
 def forward_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """转发消息段数据"""
-    return data_provider.get_segments_by_type("forward")
+    """转发消息段数据（无数据时自动跳过测试）"""
+    segments = data_provider.get_segments_by_type("forward")
+    _skip_if_no_data(segments)
+    return segments
 
 
 @pytest.fixture
 def message_events(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """消息事件数据"""
-    return data_provider.message_events
+    """消息事件数据（无数据时自动跳过测试）"""
+    events = data_provider.message_events
+    _skip_if_no_data(events)
+    return events
