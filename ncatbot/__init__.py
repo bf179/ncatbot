@@ -5,3 +5,14 @@ try:
 except Exception:
     # Fallback for editable installs / local development where _version.py may not exist.
     __version__ = "0+unknown"
+
+# 核心导出
+from .core import BotClient, EventBus, NcatBotEvent, EventType
+
+__all__ = [
+    "__version__",
+    "BotClient",
+    "EventBus",
+    "NcatBotEvent",
+    "EventType",
+]

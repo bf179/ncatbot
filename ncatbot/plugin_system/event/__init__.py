@@ -6,10 +6,14 @@
 # @Description  : 喵喵喵, 我还没想好怎么介绍文件喵
 # @Copyright (c) 2025 by Fish-LP, Fcatbot使用许可协议
 # -------------------------
-from .event import NcatBotEvent
-from .event_bus import EventBus
+
+# 从 client 模块导入（EventBus 已移至 client 模块）
+from ncatbot.core.client.ncatbot_event import NcatBotEvent, NcatBotEventFactory
+from ncatbot.core.client.event_bus import EventBus, HandlerTimeoutError
 
 __all__ = [
     "NcatBotEvent",
+    "NcatBotEventFactory",
     "EventBus",
+    "HandlerTimeoutError",
 ]

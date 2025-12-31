@@ -13,7 +13,6 @@ from .utils import (
     APIComponent,
     APIReturnStatus,
     generate_sync_methods,
-    BaseAPI,
 )
 
 if TYPE_CHECKING:

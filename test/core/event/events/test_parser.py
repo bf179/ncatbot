@@ -15,7 +15,7 @@ from ncatbot.core.event.events import (
     PokeNotifyEvent,
     GroupRecallNoticeEvent,
 )
-from ncatbot.core.event.enums import PostType, MessageType, NoticeType, MetaEventType
+from ncatbot.core.event.enums import PostType, MessageType, NoticeType, MetaEventType, RequestType, NotifySubType
 
 
 class TestEventParserRegistry:
@@ -27,23 +27,23 @@ class TestEventParserRegistry:
     
     def test_message_events_registered(self):
         """测试消息事件已注册"""
-        assert (PostType.MESSAGE.value, MessageType.PRIVATE.value) in EventParser._registry
-        assert (PostType.MESSAGE.value, MessageType.GROUP.value) in EventParser._registry
+        assert (PostType.MESSAGE, MessageType.PRIVATE) in EventParser._registry
+        assert (PostType.MESSAGE, MessageType.GROUP) in EventParser._registry
     
     def test_meta_events_registered(self):
         """测试元事件已注册"""
-        assert (PostType.META_EVENT.value, MetaEventType.LIFECYCLE.value) in EventParser._registry
-        assert (PostType.META_EVENT.value, MetaEventType.HEARTBEAT.value) in EventParser._registry
+        assert (PostType.META_EVENT, MetaEventType.LIFECYCLE) in EventParser._registry
+        assert (PostType.META_EVENT, MetaEventType.HEARTBEAT) in EventParser._registry
     
     def test_request_events_registered(self):
         """测试请求事件已注册"""
-        assert (PostType.REQUEST.value, "friend") in EventParser._registry
-        assert (PostType.REQUEST.value, "group") in EventParser._registry
+        assert (PostType.REQUEST, RequestType.FRIEND) in EventParser._registry
+        assert (PostType.REQUEST, RequestType.GROUP) in EventParser._registry
     
     def test_notice_events_registered(self):
         """测试通知事件已注册"""
-        assert (PostType.NOTICE.value, NoticeType.GROUP_RECALL.value) in EventParser._registry
-        assert (PostType.NOTICE.value, "poke") in EventParser._registry
+        assert (PostType.NOTICE, NoticeType.GROUP_RECALL) in EventParser._registry
+        assert (PostType.NOTICE, NotifySubType.POKE) in EventParser._registry
 
 
 class TestEventParserParse:
@@ -172,7 +172,7 @@ class TestEventParserErrors:
             "self_id": "123"
         }
         
-        with pytest.raises(ValueError, match="missing 'post_type'"):
+        with pytest.raises(ValueError, match="Unknown event type"):
             EventParser.parse(data, mock_api)
     
     def test_unknown_event_type_raises_error(self, mock_api):
@@ -195,46 +195,46 @@ class TestEventParserErrors:
             "message_type": "unknown_message_type"
         }
         
-        with pytest.raises(ValueError, match="Unknown event type"):
+        with pytest.raises(ValueError, match="No event class registered"):
             EventParser.parse(data, mock_api)
 
 
-class TestEventParserGetSecondaryKey:
-    """测试 EventParser._get_secondary_key() 方法"""
+class TestEventParserGetRegistryKey:
+    """测试 EventParser._get_registry_key() 方法"""
     
-    def test_message_secondary_key(self):
-        """测试消息事件的二级 key"""
+    def test_message_registry_key(self):
+        """测试消息事件的注册 key"""
         data = {"post_type": "message", "message_type": "private"}
-        key = EventParser._get_secondary_key(data)
-        assert key == "private"
+        key = EventParser._get_registry_key(data)
+        assert key == ("message", "private")
         
         data = {"post_type": "message", "message_type": "group"}
-        key = EventParser._get_secondary_key(data)
-        assert key == "group"
+        key = EventParser._get_registry_key(data)
+        assert key == ("message", "group")
     
-    def test_request_secondary_key(self):
-        """测试请求事件的二级 key"""
+    def test_request_registry_key(self):
+        """测试请求事件的注册 key"""
         data = {"post_type": "request", "request_type": "friend"}
-        key = EventParser._get_secondary_key(data)
-        assert key == "friend"
+        key = EventParser._get_registry_key(data)
+        assert key == ("request", "friend")
     
-    def test_meta_event_secondary_key(self):
-        """测试元事件的二级 key"""
+    def test_meta_event_registry_key(self):
+        """测试元事件的注册 key"""
         data = {"post_type": "meta_event", "meta_event_type": "heartbeat"}
-        key = EventParser._get_secondary_key(data)
-        assert key == "heartbeat"
+        key = EventParser._get_registry_key(data)
+        assert key == ("meta_event", "heartbeat")
     
-    def test_notice_secondary_key(self):
-        """测试普通通知事件的二级 key"""
+    def test_notice_registry_key(self):
+        """测试普通通知事件的注册 key"""
         data = {"post_type": "notice", "notice_type": "group_recall"}
-        key = EventParser._get_secondary_key(data)
-        assert key == "group_recall"
+        key = EventParser._get_registry_key(data)
+        assert key == ("notice", "group_recall")
     
-    def test_notify_secondary_key_uses_subtype(self):
+    def test_notify_registry_key_uses_subtype(self):
         """测试 notify 类型使用 sub_type 作为二级 key"""
         data = {"post_type": "notice", "notice_type": "notify", "sub_type": "poke"}
-        key = EventParser._get_secondary_key(data)
-        assert key == "poke"
+        key = EventParser._get_registry_key(data)
+        assert key == ("notice", "poke")
 
 
 class TestEventParserWithRealData:

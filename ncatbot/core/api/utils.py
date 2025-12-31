@@ -13,13 +13,10 @@ from typing import (
     Any,
     Callable,
     Dict,
-    Generic,
     List,
     Optional,
     TYPE_CHECKING,
     TypeVar,
-    Union,
-    overload,
 )
 
 from ncatbot.utils import get_log, ncatbot_config, NcatBotError
@@ -35,16 +32,6 @@ R = TypeVar("R")
 # =============================================================================
 # 错误类型定义
 # =============================================================================
-
-
-class ExclusiveArgumentError(NcatBotError):
-    """互斥参数错误"""
-
-    logger = LOG
-
-    def __init__(self, arg_name1: str, arg_name2: str, extra_info: str = "参数互斥"):
-        super().__init__(f"{extra_info}: {arg_name1}, {arg_name2}")
-
 
 class NapCatAPIError(Exception):
     """NapCat API 调用错误"""
@@ -70,38 +57,6 @@ class APIValidationError(NcatBotError):
 # =============================================================================
 # 参数验证工具
 # =============================================================================
-
-
-def check_exclusive_argument(
-    arg1: Any,
-    arg2: Any,
-    names: List[str],
-    error: bool = False,
-) -> Optional[ExclusiveArgumentError]:
-    """
-    检查两个互斥参数
-
-    Args:
-        arg1: 第一个参数值
-        arg2: 第二个参数值
-        names: 参数名称列表 [name1, name2]
-        error: 是否在检测到错误时抛出异常
-
-    Returns:
-        如果有错误且 error=False，返回错误对象；否则返回 None
-
-    Raises:
-        ExclusiveArgumentError: 当 error=True 且参数互斥时
-    """
-    if (arg1 is not None) == (arg2 is not None):
-        if arg1 is not None:
-            e = ExclusiveArgumentError(*names)
-        else:
-            e = ExclusiveArgumentError(*names, "至少提供一个参数")
-        if error:
-            raise e
-        return e
-    return None
 
 
 def require_at_least_one(*args: Any, names: List[str]) -> None:
@@ -133,6 +88,29 @@ def require_exactly_one(*args: Any, names: List[str]) -> None:
     count = sum(1 for arg in args if arg is not None)
     if count != 1:
         raise APIValidationError(f"必须且只能提供以下参数之一: {', '.join(names)}")
+
+
+def check_exclusive_argument(*args: Any, names: List[str], error: bool = False) -> bool:
+    """
+    检查互斥参数，确保只提供一个
+
+    Args:
+        *args: 参数值列表
+        names: 对应的参数名称列表
+        error: 如果为 True，在检查失败时抛出异常
+
+    Returns:
+        bool: 如果恰好提供一个参数返回 True，否则返回 False
+
+    Raises:
+        APIValidationError: 如果 error=True 且提供的参数数量不是 1
+    """
+    count = sum(1 for arg in args if arg is not None)
+    if count != 1:
+        if error:
+            raise APIValidationError(f"必须且只能提供以下参数之一: {', '.join(names)}")
+        return False
+    return True
 
 
 # =============================================================================
@@ -259,28 +237,6 @@ class APIComponent:
 
 
 # =============================================================================
-# 向后兼容的 BaseAPI（过渡用）
-# =============================================================================
-
-
-class BaseAPI:
-    """
-    传统 API 基类（向后兼容）
-
-    ⚠️ 已废弃：新代码请使用 APIComponent
-
-    保留此类是为了向后兼容现有代码，新的 API 模块应使用 APIComponent。
-    """
-
-    def __init__(self, async_callback: Callable[[str, dict], dict]):
-        """
-        Args:
-            async_callback: 异步回调函数
-        """
-        self.async_callback = async_callback
-
-
-# =============================================================================
 # 同步方法生成器
 # =============================================================================
 
@@ -302,13 +258,13 @@ def sync_wrapper(async_method: Callable[..., T]) -> Callable[..., T]:
 
     @functools.wraps(async_method)
     def wrapper(self, *args, **kwargs):
-        return run_coroutine(async_method, self, *args, **kwargs)
+        return run_coroutine(async_method, self, *args, **kwargs)  # type: ignore
 
     # 标记为同步包装方法
-    wrapper._is_sync_wrapper = True
-    wrapper._async_method = async_method
+    wrapper._is_sync_wrapper = True  # type: ignore
+    wrapper._async_method = async_method  # type: ignore
 
-    return wrapper
+    return wrapper  # type: ignore
 
 
 def generate_sync_methods(cls: type) -> type:

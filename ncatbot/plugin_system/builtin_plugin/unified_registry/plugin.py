@@ -7,8 +7,7 @@ from ncatbot.plugin_system.builtin_plugin.unified_registry.command_system.utils 
     CommandSpec,
 )
 from ncatbot.plugin_system.event.event import NcatBotEvent
-from ncatbot.core.event import BaseMessageEvent
-from ncatbot.core.event.base_event import BaseEventData
+from ncatbot.core.event import BaseMessageEvent, BaseEvent
 from ncatbot.utils import get_log
 from ...builtin_mixin import NcatBotPlugin
 from .trigger.binder import BindResult
@@ -20,6 +19,8 @@ from .filter_system import filter_registry, FilterValidator
 from .command_system.registry.registry import command_registry
 from .legacy_registry import legacy_registry
 
+# 兼容别名
+BaseEventData = BaseEvent
 
 if TYPE_CHECKING:
     pass

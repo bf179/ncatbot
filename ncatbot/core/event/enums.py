@@ -34,3 +34,15 @@ class RequestType(str, Enum):
 class MetaEventType(str, Enum):
     LIFECYCLE = "lifecycle"
     HEARTBEAT = "heartbeat"
+
+
+class EventType(str, Enum):
+    """
+    统一的事件类型枚举
+    
+    简化为四大类事件：消息、通知、请求、元事件
+    """
+    MESSAGE = "message_event"
+    NOTICE = "notice_event"
+    REQUEST = "request_event"
+    META = "meta_event"

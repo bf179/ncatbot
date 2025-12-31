@@ -1,67 +1,94 @@
-from typing import Dict, Type, Tuple, Any, Union
-from enum import Enum
+from typing import Dict, Type, Tuple, Any, Optional
 from .events import *
-from .enums import *
+from .enums import PostType, MessageType, NoticeType, NotifySubType, RequestType, MetaEventType
 from .context import IBotAPI
+
 
 class EventParser:
     """
-    事件分发器
+    事件解析器
+    
+    使用 (post_type, secondary_key) 管理事件类型到事件类的映射。
     """
-    # Key: (PostType, SecondaryKey)
+    # Key: (post_type, secondary_key) -> Type[BaseEvent]
     _registry: Dict[Tuple[str, str], Type[BaseEvent]] = {}
 
     @classmethod
-    def register(cls, post_type: Union[PostType, str], secondary_key: str):
-        """装饰器注册"""
-        def wrapper(event_cls):
-            p_val = post_type.value if isinstance(post_type, Enum) else post_type
-            cls._registry[(p_val, secondary_key)] = event_cls
+    def register(cls, post_type: str, secondary_key: str = ""):
+        """
+        装饰器注册事件类
+        
+        Args:
+            post_type: 主事件类型 (message, notice, request, meta_event)
+            secondary_key: 次级键 (message_type, notice_type, request_type, meta_event_type 等)
+        """
+        def wrapper(event_cls: Type[BaseEvent]) -> Type[BaseEvent]:
+            cls._registry[(post_type, secondary_key)] = event_cls
             return event_cls
         return wrapper
 
-    @staticmethod
-    def _get_secondary_key(data: Dict[str, Any]) -> str:
+    @classmethod
+    def _get_registry_key(cls, data: Dict[str, Any]) -> Optional[Tuple[str, str]]:
         """
-        根据数据特征提取二级索引 Key
-        """
-        pt = data.get("post_type")
+        从原始数据获取注册表查找键
         
-        if pt == PostType.MESSAGE:
-            return str(data.get("message_type") or "") # private / group
-        
-        elif pt == PostType.REQUEST:
-            return str(data.get("request_type") or "") # friend / group
-        
-        elif pt == PostType.META_EVENT:
-            return str(data.get("meta_event_type") or "") # lifecycle / heartbeat
-        
-        elif pt == PostType.NOTICE:
-            n_type = data.get("notice_type")
-            # 特殊处理 notify 类型，因为它们共享 notice_type 但 sub_type 不同
-            if n_type == NoticeType.NOTIFY:
-                return str(data.get("sub_type") or "") # poke / lucky_king / honor
-            return str(n_type or "") # group_upload / group_decrease ...
+        Args:
+            data: OneBot 原始事件数据
             
-        return "default"
+        Returns:
+            (post_type, secondary_key) 元组
+        """
+        post_type = data.get("post_type", "")
+        
+        if post_type == PostType.MESSAGE or post_type == "message_sent":
+            message_type = data.get("message_type", "")
+            return (PostType.MESSAGE, message_type)
+        
+        if post_type == PostType.NOTICE:
+            notice_type = data.get("notice_type", "")
+            # notify 子类型需要进一步细分
+            if notice_type == NoticeType.NOTIFY:
+                sub_type = data.get("sub_type", "")
+                return (PostType.NOTICE, sub_type)
+            return (PostType.NOTICE, notice_type)
+        
+        if post_type == PostType.REQUEST:
+            request_type = data.get("request_type", "")
+            return (PostType.REQUEST, request_type)
+        
+        if post_type == PostType.META_EVENT:
+            meta_event_type = data.get("meta_event_type", "")
+            return (PostType.META_EVENT, meta_event_type)
+        
+        return None
 
     @classmethod
     def parse(cls, data: Dict[str, Any], api_instance: IBotAPI) -> BaseEvent:
-        post_type = data.get("post_type")
-        if not post_type:
-            raise ValueError("Data missing 'post_type'")
+        """
+        解析原始事件数据为事件对象
+        
+        Args:
+            data: OneBot 原始事件数据
+            api_instance: API 实例，用于绑定到事件对象
+            
+        Returns:
+            解析后的事件对象
+            
+        Raises:
+            ValueError: 无法识别的事件类型或解析失败
+        """
+        key = cls._get_registry_key(data)
+        if not key:
+            post_type = data.get("post_type")
+            raise ValueError(f"Unknown event type: post_type={post_type}")
 
-        sec_key = cls._get_secondary_key(data)
+        # 查找注册的事件类
+        event_cls = cls._registry.get(key)
         
-        # 1. 查找注册的类
-        event_cls = cls._registry.get((post_type, sec_key))
-        
-        # 2. 如果未找到具体的类，尝试降级处理或抛出
         if not event_cls:
-            # 你可以在这里返回一个 GenericEvent 用于调试
-            raise ValueError(f"Unknown event type: {post_type} -> {sec_key}")
+            raise ValueError(f"No event class registered for {key}")
 
-        # 3. 实例化并注入 API
+        # 实例化并注入 API
         try:
             event = event_cls(**data)
             event.bind_api(api_instance)
@@ -69,10 +96,10 @@ class EventParser:
         except Exception as e:
             raise ValueError(f"Event parsing failed for {event_cls.__name__}: {e}")
 
-# --- 初始化注册表 ---
-# 建议放在 __init__.py 或显式调用 setup()
 
+# --- 初始化注册表 ---
 def register_builtin_events():
+    """注册内置事件类"""
     # Message
     EventParser.register(PostType.MESSAGE, MessageType.PRIVATE)(PrivateMessageEvent)
     EventParser.register(PostType.MESSAGE, MessageType.GROUP)(GroupMessageEvent)
@@ -99,6 +126,7 @@ def register_builtin_events():
     EventParser.register(PostType.NOTICE, NotifySubType.POKE)(PokeNotifyEvent)
     EventParser.register(PostType.NOTICE, NotifySubType.LUCKY_KING)(LuckyKingNotifyEvent)
     EventParser.register(PostType.NOTICE, NotifySubType.HONOR)(HonorNotifyEvent)
+
 
 # 执行注册
 register_builtin_events()
