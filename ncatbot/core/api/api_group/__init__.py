@@ -73,11 +73,12 @@ class GroupAPI(
         ```
     """
 
-    def __init__(self, client: "IAPIClient"):
+    def __init__(self, client: "IAPIClient", service_manager=None):
         """
         初始化群管理 API
 
         Args:
             client: API 客户端实例，实现 IAPIClient 协议
+            service_manager: 服务管理器实例（可选）
         """
-        super().__init__(client)
+        super().__init__(client, service_manager)

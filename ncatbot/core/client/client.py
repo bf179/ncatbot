@@ -9,7 +9,7 @@ from typing import List, Type, TypeVar, TYPE_CHECKING
 from ncatbot.utils import get_log
 from ncatbot.utils.error import NcatBotError
 from ncatbot.core.api import BotAPI
-from ncatbot.core.service import ServiceManager, WebSocketService
+from ncatbot.core.service import ServiceManager, MessageRouter, PreUploadService
 
 from .event_bus import EventBus
 from .dispatcher import EventDispatcher
@@ -42,7 +42,7 @@ class BotClient(EventRegistry, LifecycleManager):
     └─────────────────────────────────────────────────────────┘
     
     事件流：
-    WebSocketService → Dispatcher → EventBus → Handlers/Plugins
+    MessageRouter → Dispatcher → EventBus → Handlers/Plugins
     
     继承：
     - EventRegistry: 提供事件注册和装饰器接口
@@ -70,8 +70,9 @@ class BotClient(EventRegistry, LifecycleManager):
         # 服务管理器
         self.services = ServiceManager()
         
-        # 注册内置服务（WebSocket 服务）
-        self.services.register(WebSocketService)
+        # 注册内置服务
+        self.services.register(MessageRouter)
+        self.services.register(PreUploadService)
         
         # API（延迟绑定 send 回调，在服务加载后绑定）
         self.api: BotAPI = None  # 将在 _setup_api 中初始化
@@ -89,13 +90,14 @@ class BotClient(EventRegistry, LifecycleManager):
     
     async def _setup_api(self) -> None:
         """设置 API（在服务加载后调用）"""
-        ws_service: WebSocketService = self.services.get("websocket")
-        if ws_service:
-            self.api = BotAPI(ws_service.send)
+        router: MessageRouter = self.services.message_router
+        if router:
+            # 传入 service_manager 以支持预上传等服务
+            self.api = BotAPI(router.send, service_manager=self.services)
             
             # 事件分发器
             self.dispatcher = EventDispatcher(self.event_bus, self.api)
-            ws_service.set_event_callback(self.dispatcher)
+            router.set_event_callback(self.dispatcher)
 
     def _register_builtin_handlers(self):
         """注册内置处理器"""

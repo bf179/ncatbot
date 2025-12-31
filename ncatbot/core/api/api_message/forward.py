@@ -49,7 +49,7 @@ class ForwardMessageMixin(APIComponent):
         Returns:
             str: 消息 ID
         """
-        check_exclusive_argument(group_id, user_id, ["group_id", "user_id"], error=True)
+        check_exclusive_argument(group_id, user_id, names=["group_id", "user_id"], error=True)
 
         data = {
             "messages": messages,

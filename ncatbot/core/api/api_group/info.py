@@ -66,11 +66,19 @@ class GroupInfoMixin(APIComponent):
         """
         获取精华消息列表
 
+        .. warning::
+            此 API 在某些群可能会返回错误（NapCat 服务端 bug），
+            例如 ``Cannot read properties of undefined (reading 'msg_seq')``。
+            如果群内没有精华消息，则返回空列表。
+
         Args:
             group_id: 群号
 
         Returns:
             List[EssenceMessage]: 精华消息列表
+
+        Raises:
+            NapCatAPIError: 如果 NapCat 处理此群的精华消息时出错
         """
         result = await self._request_raw(
             "/get_essence_msg_list",

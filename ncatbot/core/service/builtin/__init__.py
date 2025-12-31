@@ -4,7 +4,7 @@
 提供 NcatBot 核心功能所需的内置服务。
 """
 
-from .websocket import WebSocketService
+from .message_router import MessageRouter
 from .preupload import (
     # 常量
     DEFAULT_CHUNK_SIZE,
@@ -34,7 +34,8 @@ from .preupload import (
 )
 
 __all__ = [
-    "WebSocketService",
+    # 消息路由
+    "MessageRouter",
     # 预上传常量
     "DEFAULT_CHUNK_SIZE",
     "DEFAULT_FILE_RETENTION",

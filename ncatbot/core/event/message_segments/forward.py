@@ -11,12 +11,36 @@ class Node(BaseModel):
     @field_validator("user_id", mode="before")
     def ensure_str(cls, v):
         return str(v) if v is not None else v
+    
+    def to_node_dict(self) -> Dict[str, Any]:
+        """转换为 OneBot 节点格式"""
+        return {
+            "type": "node",
+            "data": {
+                "name": self.nickname,
+                "uin": self.user_id,
+                "content": self.content.to_list() if self.content else [],
+            }
+        }
 
 
 class Forward(MessageSegment):
     type: ClassVar[str] = "forward"
     id: Optional[str] = None
     content: Optional[List[Node]] = None
+    
+    def to_forward_dict(self) -> Dict[str, Any]:
+        """
+        转换为 send_forward_msg API 需要的参数字典
+        
+        Returns:
+            Dict 包含 messages, news 等参数
+        """
+        if not self.content:
+            return {"messages": []}
+        
+        messages = [node.to_node_dict() for node in self.content]
+        return {"messages": messages}
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Forward":

@@ -61,9 +61,16 @@ class NapCatService:
         try:
             async with websockets.connect(uri, open_timeout=5) as ws:
                 data = json.loads(await ws.recv())
-                if data.get("status") == "ok":
-                    return True
-                raise NcatBotError("WebSocket Token 填写错误", False)
+                # NapCat 连接成功后会发送 meta_event lifecycle 事件
+                # 如果 token 验证失败，会返回 status: failed
+                if data.get("status") == "failed":
+                    retcode = data.get("retcode")
+                    message = data.get("message", "未知错误")
+                    if retcode == 1403:
+                        raise NcatBotError("WebSocket Token 填写错误", False)
+                    raise NcatBotError(f"WebSocket 连接失败: {message}", False)
+                # 收到 meta_event 或其他非错误消息表示连接成功
+                return True
         except NcatBotError:
             raise
         except Exception as e:

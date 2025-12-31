@@ -2,6 +2,7 @@
 预上传服务
 
 提供消息和文件的预上传功能，包括流式上传。
+自己维护独立的 WebSocket 连接。
 """
 
 from .constants import (
@@ -10,6 +11,7 @@ from .constants import (
     StreamStatus,
     StreamResponseType,
 )
+from .upload_connection import UploadConnection
 from .client import (
     StreamUploadClient,
     FileAnalysis,
@@ -27,7 +29,8 @@ from .utils import (
     generate_filename_from_type,
 )
 from .processor import MessagePreUploadProcessor, ProcessResult
-from .service import PreUploadService, PreUploadResult
+from .result import PreUploadResult
+from .service import PreUploadService
 
 __all__ = [
     # 常量
@@ -35,6 +38,8 @@ __all__ = [
     "DEFAULT_FILE_RETENTION",
     "StreamStatus",
     "StreamResponseType",
+    # 连接
+    "UploadConnection",
     # 客户端
     "StreamUploadClient",
     "FileAnalysis",

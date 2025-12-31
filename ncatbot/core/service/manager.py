@@ -10,7 +10,7 @@ from .base import BaseService
 
 if TYPE_CHECKING:
     from .builtin import (
-        WebSocketService,
+        MessageRouter,
         PreUploadService,
     )
 
@@ -24,7 +24,7 @@ class ServiceManager:
     管理所有服务的生命周期，提供服务的注册、加载、卸载、获取等功能。
     
     内置服务（支持 IDE 类型提示）：
-        - websocket: WebSocketService - WebSocket 通信服务
+        - message_router: MessageRouter - 消息路由服务
         - preupload: PreUploadService - 消息和文件预上传服务
     
     使用示例：
@@ -32,14 +32,14 @@ class ServiceManager:
         manager = ServiceManager()
         
         # 注册内置服务
-        manager.register(WebSocketService)
+        manager.register(MessageRouter)
         manager.register(PreUploadService)
         
         # 加载并使用
         await manager.load_all()
         
         # 类型安全的访问（IDE 提示支持）
-        ws = manager.websocket  # 类型: WebSocketService
+        router = manager.message_router  # 类型: MessageRouter
         preupload = manager.preupload  # 类型: PreUploadService
         ```
     """
@@ -55,9 +55,9 @@ class ServiceManager:
     # -------------------------------------------------------------------------
     
     @property
-    def websocket(self) -> Optional["WebSocketService"]:
-        """WebSocket 通信服务"""
-        return self._services.get("websocket")  # type: ignore
+    def message_router(self) -> Optional["MessageRouter"]:
+        """消息路由服务"""
+        return self._services.get("message_router")  # type: ignore
     
     @property
     def preupload(self) -> Optional["PreUploadService"]:

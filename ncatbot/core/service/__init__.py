@@ -7,7 +7,7 @@
 from .base import BaseService
 from .manager import ServiceManager
 from .builtin import (
-    WebSocketService,
+    MessageRouter,
     StreamUploadClient,
     UploadResult,
     MessagePreUploadProcessor,
@@ -19,7 +19,7 @@ from .builtin import (
 __all__ = [
     "BaseService",
     "ServiceManager",
-    "WebSocketService",
+    "MessageRouter",
     "StreamUploadClient",
     "UploadResult",
     "MessagePreUploadProcessor",

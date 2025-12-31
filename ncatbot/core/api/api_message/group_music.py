@@ -45,7 +45,7 @@ class GroupMusicMixin(APIComponent):
         """
         from ncatbot.core.event import Music
 
-        music = Music(type=type, id=id)
+        music = Music(platform=type, id=str(id))
         result = await self._request_raw(
             "/send_group_msg",
             {"group_id": group_id, "message": [music.to_dict()]},
@@ -79,7 +79,7 @@ class GroupMusicMixin(APIComponent):
         from ncatbot.core.event import Music
 
         music = Music(
-            type="custom",
+            platform="custom",
             id=None,
             url=url,
             audio=audio,

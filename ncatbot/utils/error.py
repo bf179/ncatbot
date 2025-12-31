@@ -1,5 +1,6 @@
 from .config import ncatbot_config
 from .logger import get_log
+import sys
 import traceback
 
 
@@ -10,9 +11,16 @@ class NcatBotError(Exception):
         if log:
             self.logger.error(f"{info}", stacklevel=stacklevel)
             if ncatbot_config.debug:
-                self.logger.info(
-                    f"stacktrace:\n{traceback.format_exc()}", stacklevel=stacklevel
-                )
+                # 检查是否有活动的异常上下文
+                if sys.exc_info()[0] is not None:
+                    self.logger.info(
+                        f"stacktrace:\n{traceback.format_exc()}", stacklevel=stacklevel
+                    )
+                else:
+                    # 没有活动异常时，输出当前调用栈
+                    self.logger.info(
+                        f"stacktrace:\n{''.join(traceback.format_stack()[:-1])}", stacklevel=stacklevel
+                    )
         super().__init__(info)
 
 
@@ -23,7 +31,12 @@ class AdapterEventError(Exception):
         if log:
             self.logger.error(f"{info}", stacklevel=2)
             if ncatbot_config.debug:
-                self.logger.info(f"stacktrace:\n{traceback.format_exc()}")
+                # 检查是否有活动的异常上下文
+                if sys.exc_info()[0] is not None:
+                    self.logger.info(f"stacktrace:\n{traceback.format_exc()}")
+                else:
+                    # 没有活动异常时，输出当前调用栈
+                    self.logger.info(f"stacktrace:\n{''.join(traceback.format_stack()[:-1])}")
         super().__init__(info)
 
 

@@ -26,6 +26,9 @@ from .config_manager import (
     ConfigManager,
     config_napcat,
 )
+from .websocket import (
+    NapCatWebSocket,
+)
 
 __all__ = [
     # 主服务
@@ -46,4 +49,6 @@ __all__ = [
     # 配置管理
     "ConfigManager",
     "config_napcat",
+    # WebSocket
+    "NapCatWebSocket",
 ]

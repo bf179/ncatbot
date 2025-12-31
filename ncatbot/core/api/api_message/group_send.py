@@ -51,11 +51,12 @@ class GroupMessageMixin(APIComponent):
         # 预上传处理
         processed_message = await self._preupload_message(message)
 
-        result = await self._request(
+        result = await self._request_raw(
             "/send_group_msg",
             {"group_id": group_id, "message": processed_message},
         )
-        return result.data
+        status = MessageAPIReturnStatus(result)
+        return status.message_id
 
     async def post_group_array_msg(
         self, group_id: Union[str, int], msg: "MessageArray"

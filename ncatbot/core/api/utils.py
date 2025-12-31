@@ -7,6 +7,7 @@ API 工具类和基础组件
 from __future__ import annotations
 
 import functools
+import sys
 import traceback
 from typing import (
     Any,
@@ -39,7 +40,12 @@ class NapCatAPIError(Exception):
     def __init__(self, info: str, retcode: Optional[int] = None):
         LOG.error(f"NapCatAPIError: {info}")
         if ncatbot_config.debug:
-            LOG.info(f"stacktrace:\n{traceback.format_exc()}")
+            # 检查是否有活动的异常上下文
+            if sys.exc_info()[0] is not None:
+                LOG.info(f"stacktrace:\n{traceback.format_exc()}")
+            else:
+                # 没有活动异常时，输出当前调用栈
+                LOG.info(f"stacktrace:\n{''.join(traceback.format_stack()[:-1])}")
         self.info = info
         self.retcode = retcode
         super().__init__(info)
@@ -243,7 +249,8 @@ class APIComponent:
     async def _preupload_file(
         self, 
         file_value: str, 
-        file_type: str = "file"
+        file_type: str = "file",
+        require_preupload: bool = False
     ) -> str:
         """
         预上传单个文件
@@ -251,18 +258,45 @@ class APIComponent:
         Args:
             file_value: 文件路径/URL/Base64
             file_type: 文件类型
+            require_preupload: 是否必须使用预上传服务（为 True 时，服务不可用将报错）
             
         Returns:
             处理后的文件路径
+            
+        Raises:
+            NapCatAPIError: 如果 require_preupload=True 且预上传服务不可用
         """
+        import os
+        
         if not self._preupload_available:
+            if require_preupload:
+                raise NapCatAPIError(
+                    "预上传服务不可用。请确保：\n"
+                    "1. PreUploadService 已注册\n"
+                    "2. ServiceManager 已传入 BotAPI\n"
+                    "3. 预上传服务已正确启动"
+                )
+            # 预上传服务不可用时，将本地路径转换为 file:// URL
+            # NapCat 需要 file:// 协议的 URL 格式
+            if file_value and not file_value.startswith(("http://", "https://", "base64://", "file://")):
+                # 可能是本地路径
+                if os.path.isabs(file_value) or os.path.exists(file_value):
+                    abs_path = os.path.abspath(file_value)
+                    return f"file://{abs_path}"
             return file_value
         
         try:
             preupload = self._service_manager.preupload
             return await preupload.preupload_file_if_needed(file_value, file_type)
         except Exception as e:
+            if require_preupload:
+                raise NapCatAPIError(f"文件预上传失败: {e}") from e
             LOG.warning(f"文件预上传失败: {e}，使用原始路径")
+            # 失败时也尝试转换为 file:// URL
+            if file_value and not file_value.startswith(("http://", "https://", "base64://", "file://")):
+                if os.path.isabs(file_value) or os.path.exists(file_value):
+                    abs_path = os.path.abspath(file_value)
+                    return f"file://{abs_path}"
             return file_value
 
     async def _request(

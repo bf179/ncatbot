@@ -17,7 +17,7 @@ from ncatbot.core.adapter import launch_napcat_service
 
 if TYPE_CHECKING:
     from ncatbot.core.api import BotAPI
-    from ncatbot.core.service import ServiceManager, WebSocketService
+    from ncatbot.core.service import ServiceManager, MessageRouter
     from .event_bus import EventBus
     from .registry import EventRegistry
 
@@ -124,20 +124,21 @@ class LifecycleManager:
         # 加载所有服务
         await self.services.load_all()
         
-        # 获取 WebSocket 服务并设置 API
-        ws_service: "WebSocketService" = self.services.get("websocket")
+        # 获取消息路由服务
+        router: "MessageRouter" = self.services.message_router
         
         from ncatbot.core.api import BotAPI
         from .dispatcher import EventDispatcher
         
-        self.api = BotAPI(ws_service.send)
+        # 传入 service_manager 以支持预上传等服务（预上传服务自己维护独立的 WebSocket）
+        self.api = BotAPI(router.send, service_manager=self.services)
         
         # 设置事件分发器
         dispatcher = EventDispatcher(self.event_bus, self.api)
-        ws_service.set_event_callback(dispatcher)
+        router.set_event_callback(dispatcher)
         
         # 开始监听
-        await ws_service.listen()
+        await router.websocket.listen()
 
     def bot_exit(self):
         """退出 Bot"""
