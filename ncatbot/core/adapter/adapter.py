@@ -16,7 +16,7 @@ from queue import Queue
 import websockets
 from websockets.exceptions import ConnectionClosedError
 
-from .nc.launch import napcat_service_ok
+from .nc import napcat_service_ok
 from ncatbot.utils import get_log, ncatbot_config
 from ncatbot.utils.error import NcatBotError, NcatBotConnectionError
 
