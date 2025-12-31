@@ -16,8 +16,8 @@ from ncatbot.utils.error import NcatBotError, NcatBotConnectionError
 from ncatbot.core.adapter import launch_napcat_service
 
 if TYPE_CHECKING:
-    from ncatbot.core.adapter import Adapter
     from ncatbot.core.api import BotAPI
+    from ncatbot.core.service import ServiceManager, WebSocketService
     from .event_bus import EventBus
     from .registry import EventRegistry
 
@@ -55,8 +55,7 @@ class LifecycleManager:
     
     def __init__(
         self,
-        adapter: "Adapter",
-        api: "BotAPI",
+        services: "ServiceManager",
         event_bus: "EventBus",
         registry: "EventRegistry",
     ):
@@ -64,19 +63,18 @@ class LifecycleManager:
         初始化生命周期管理器
         
         Args:
-            adapter: WebSocket 适配器
-            api: Bot API
+            services: 服务管理器
             event_bus: 事件总线
             registry: 事件注册器
         """
-        self.adapter = adapter
-        self.api = api
+        self.services = services
         self.event_bus = event_bus
         self.registry = registry
         
         self._running = False
         self.crash_flag = False
         self.plugin_loader = None
+        self.api: Optional["BotAPI"] = None
         
         # 后台运行相关
         self.lock: Optional[threading.Lock] = None
@@ -91,7 +89,7 @@ class LifecycleManager:
         2. 初始化插件加载器
         3. 加载插件
         4. 启动 NapCat 服务
-        5. 连接 WebSocket
+        5. 加载内置服务并连接 WebSocket
         """
         # 验证并应用配置
         for key, value in kwargs.items():
@@ -116,10 +114,30 @@ class LifecycleManager:
         else:
             launch_napcat_service()
             try:
-                asyncio.run(self.adapter.connect())
+                asyncio.run(self._async_start())
             except NcatBotConnectionError:
                 self.bot_exit()
                 raise
+    
+    async def _async_start(self):
+        """异步启动流程"""
+        # 加载所有服务
+        await self.services.load_all()
+        
+        # 获取 WebSocket 服务并设置 API
+        ws_service: "WebSocketService" = self.services.get("websocket")
+        
+        from ncatbot.core.api import BotAPI
+        from .dispatcher import EventDispatcher
+        
+        self.api = BotAPI(ws_service.send)
+        
+        # 设置事件分发器
+        dispatcher = EventDispatcher(self.event_bus, self.api)
+        ws_service.set_event_callback(dispatcher)
+        
+        # 开始监听
+        await ws_service.listen()
 
     def bot_exit(self):
         """退出 Bot"""
@@ -127,6 +145,10 @@ class LifecycleManager:
             LOG.warning("Bot 未运行")
             return
         status.exit = True
+        
+        # 关闭所有服务
+        run_coroutine(self.services.close_all)
+        
         if self.plugin_loader:
             asyncio.run(self.plugin_loader.unload_all())
         LOG.info("Bot 已退出")

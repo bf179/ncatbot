@@ -19,6 +19,7 @@ from .event import EventBus, NcatBotEvent
 from .rbac import RBACManager
 from ncatbot.utils import status, get_log
 from ncatbot.core.api import BotAPI
+from ncatbot.core.service import ServiceManager
 
 if TYPE_CHECKING:
     from .loader import PluginLoader
@@ -71,6 +72,7 @@ class BasePlugin:
     rbac_manager: RBACManager
     source_dir: Path
     workspace: Path
+    services: ServiceManager  # 服务管理器实例
 
     # -------- 内部属性 --------
     _debug: bool  # 调试模式标志
@@ -85,6 +87,7 @@ class BasePlugin:
         debug: bool = False,
         rbac_manager: RBACManager = None,
         plugin_loader: "PluginLoader" = None,
+        service_manager: ServiceManager = None,
         **extras: Any,
     ) -> None:
         """初始化插件实例。
@@ -94,6 +97,7 @@ class BasePlugin:
         Args:
             event_bus: 事件总线实例
             debug: 是否启用调试模式，默认为False
+            service_manager: 服务管理器实例
             extras: 额外注入的属性键值对
 
         Raises:
@@ -116,6 +120,7 @@ class BasePlugin:
         self.api = status.global_api
         self._handlers_id = set()
         self.rbac_manager = rbac_manager
+        self.services = service_manager or ServiceManager()
 
         # 路径计算（只算不建）
         self.main_file = Path(inspect.getmodule(self.__class__).__file__).resolve()

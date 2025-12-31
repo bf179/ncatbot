@@ -6,19 +6,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Literal, Optional, Union
-
+from typing import List, Optional, Union
+from ...event import MessageArray, Record, File
 from ..utils import (
     APIComponent,
-    APIReturnStatus,
     MessageAPIReturnStatus,
     get_log,
 )
 from .validation import validate_msg
 
-if TYPE_CHECKING:
-    from ..client import IAPIClient
-    from ncatbot.core.event.message_segment.message_array import MessageArray
 
 LOG = get_log("ncatbot.core.api.api_message.group_send")
 
@@ -48,12 +44,11 @@ class GroupMessageMixin(APIComponent):
             LOG.warning("消息格式验证失败，发送群聊消息取消")
             return ""
 
-        result = await self._request_raw(
+        result = await self._request(
             "/send_group_msg",
             {"group_id": group_id, "message": message},
         )
-        status = MessageAPIReturnStatus(result)
-        return status.message_id
+        return result.data
 
     async def post_group_array_msg(
         self, group_id: Union[str, int], msg: "MessageArray"
@@ -70,24 +65,11 @@ class GroupMessageMixin(APIComponent):
         """
         return await self.send_group_msg(group_id, msg.to_list())
 
-    async def post_all_group_array_msg(self, msg: "MessageArray") -> List[str]:
+    async def post_all_group_array_msg(self, msg: "MessageArray"):
+        """TODO: 发送群消息到所有群
         """
-        发送消息到所有群
+        pass
 
-        ⚠️ 慎用！
-
-        Args:
-            msg: MessageArray 消息对象
-
-        Returns:
-            List[str]: 消息 ID 列表
-        """
-        group_id_list = await self.get_group_list()
-        message_id_list = []
-        for group_id in group_id_list:
-            message_id = await self.post_group_array_msg(group_id, msg)
-            message_id_list.append(message_id)
-        return message_id_list
 
     async def post_group_msg(
         self,
@@ -112,7 +94,7 @@ class GroupMessageMixin(APIComponent):
         Returns:
             str: 消息 ID
         """
-        from ncatbot.core.event.message_segment.message_array import MessageArray
+        from ...event import MessageArray
 
         msg_array = MessageArray()
         if reply is not None:
@@ -138,10 +120,7 @@ class GroupMessageMixin(APIComponent):
         Returns:
             str: 消息 ID
         """
-        from ncatbot.core.event.message_segment.message_array import MessageArray
-
-        msg_array = MessageArray(text)
-        return await self.post_group_array_msg(group_id, msg_array)
+        return await self.post_group_msg(group_id, text=text)
 
     async def send_group_plain_text(
         self, group_id: Union[str, int], text: str
@@ -156,11 +135,7 @@ class GroupMessageMixin(APIComponent):
         Returns:
             str: 消息 ID
         """
-        from ncatbot.core.event.message_segment.message_array import MessageArray
-        from ncatbot.core.event import PlainText
-
-        msg_array = MessageArray(PlainText(text))
-        return await self.post_group_array_msg(group_id, msg_array)
+        return await self.send_group_msg(group_id, [{"type": "text", "data": {"text": text}}])
 
     async def send_group_image(self, group_id: Union[str, int], image: str) -> str:
         """
@@ -173,14 +148,7 @@ class GroupMessageMixin(APIComponent):
         Returns:
             str: 消息 ID
         """
-        from ncatbot.core.event import Image
-
-        result = await self._request_raw(
-            "/send_group_msg",
-            {"group_id": group_id, "message": [Image(file=image).to_dict()]},
-        )
-        status = MessageAPIReturnStatus(result)
-        return status.message_id
+        return await self.post_group_msg(group_id, image=image)
 
     async def send_group_record(self, group_id: Union[str, int], file: str) -> str:
         """
@@ -193,60 +161,23 @@ class GroupMessageMixin(APIComponent):
         Returns:
             str: 消息 ID
         """
-        from ncatbot.core.event import Record
-
-        result = await self._request_raw(
-            "/send_group_msg",
-            {"group_id": group_id, "message": [Record(file=file).to_dict()]},
+        return await self.post_group_array_msg(
+            group_id,
+            MessageArray((Record(file=file))),
         )
-        status = MessageAPIReturnStatus(result)
-        return status.message_id
 
     async def send_group_dice(
         self, group_id: Union[str, int], value: int = 1
-    ) -> str:
+    ):
+        """TODO: 发送群掷骰子消息
         """
-        发送群骰子消息
-
-        Args:
-            group_id: 群号
-            value: 骰子点数（暂不支持指定）
-
-        Returns:
-            str: 消息 ID
-        """
-        result = await self._request_raw(
-            "/send_group_msg",
-            {
-                "group_id": group_id,
-                "message": [{"type": "dice", "data": {"value": value}}],
-            },
-        )
-        status = MessageAPIReturnStatus(result)
-        return status.message_id
+        pass
 
     async def send_group_rps(
         self, group_id: Union[str, int], value: int = 1
-    ) -> str:
+    ):
+        """TODO: 发送群猜拳消息
         """
-        发送群猜拳消息
-
-        Args:
-            group_id: 群号
-            value: 猜拳结果（暂不支持指定）
-
-        Returns:
-            str: 消息 ID
-        """
-        result = await self._request_raw(
-            "/send_group_msg",
-            {
-                "group_id": group_id,
-                "message": [{"type": "rps", "data": {"value": value}}],
-            },
-        )
-        status = MessageAPIReturnStatus(result)
-        return status.message_id
 
     async def send_group_file(
         self,
@@ -265,20 +196,7 @@ class GroupMessageMixin(APIComponent):
         Returns:
             str: 消息 ID
         """
-        from ncatbot.core.event import File
-
-        payload = File(file=file, file_name=name).to_dict()
-        result = await self._request_raw(
-            "/send_group_msg",
-            {"group_id": group_id, "message": [payload]},
+        return await self.post_group_array_msg(
+            group_id,
+            MessageArray((File(file=file, file_name=name))),
         )
-        status = MessageAPIReturnStatus(result)
-        return status.message_id
-
-    # -------------------------------------------------------------------------
-    # 占位方法（由其他 API 实现）
-    # -------------------------------------------------------------------------
-
-    async def get_group_list(self) -> List[str]:
-        """获取群列表（应由 GroupAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by GroupAPI")

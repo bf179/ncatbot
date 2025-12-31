@@ -23,6 +23,7 @@ from ncatbot.utils import get_log, ncatbot_config, NcatBotError
 
 if TYPE_CHECKING:
     from .client import IAPIClient, APIResponse
+    from ncatbot.core.service import ServiceManager
 
 LOG = get_log("API")
 T = TypeVar("T")
@@ -195,12 +196,19 @@ class APIComponent:
     所有 API 模块应继承此类，通过构造函数注入 IAPIClient 依赖。
     """
 
-    def __init__(self, client: "IAPIClient"):
+    def __init__(self, client: "IAPIClient", service_manager: Optional["ServiceManager"] = None):
         """
         Args:
             client: API 客户端实例，实现 IAPIClient 接口
+            service_manager: 服务管理器实例（可选）
         """
         self._client = client
+        self._service_manager = service_manager
+    
+    @property
+    def services(self) -> Optional["ServiceManager"]:
+        """获取服务管理器实例"""
+        return self._service_manager
 
     async def _request(
         self, endpoint: str, params: Optional[Dict[str, Any]] = None

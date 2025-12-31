@@ -8,8 +8,8 @@ from typing import List, Type, TypeVar, TYPE_CHECKING
 
 from ncatbot.utils import get_log
 from ncatbot.utils.error import NcatBotError
-from ncatbot.core.adapter import Adapter
 from ncatbot.core.api import BotAPI
+from ncatbot.core.service import ServiceManager, WebSocketService
 
 from .event_bus import EventBus
 from .dispatcher import EventDispatcher
@@ -31,8 +31,8 @@ class BotClient(EventRegistry, LifecycleManager):
     ┌─────────────────────────────────────────────────────────┐
     │                       BotClient                         │
     │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌─────────┐ │
-    │  │ Adapter  │  │ EventBus │  │ Registry │  │Lifecycle│ │
-    │  │(通信层)   │ │(分发中心) │ │(注册接口)  │ │(生命周期)│ │
+    │  │ Services │  │ EventBus │  │ Registry │  │Lifecycle│ │
+    │  │(服务层)   │ │(分发中心) │ │(注册接口)  │ │(生命周期)│ │
     │  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬────┘ │
     │       │             │             │             │       │
     │       └─────────────┴─────────────┴─────────────┘       │
@@ -42,7 +42,7 @@ class BotClient(EventRegistry, LifecycleManager):
     └─────────────────────────────────────────────────────────┘
     
     事件流：
-    WebSocket → Adapter → Dispatcher → EventBus → Handlers/Plugins
+    WebSocketService → Dispatcher → EventBus → Handlers/Plugins
     
     继承：
     - EventRegistry: 提供事件注册和装饰器接口
@@ -67,20 +67,35 @@ class BotClient(EventRegistry, LifecycleManager):
         # 初始化父类 EventRegistry
         super().__init__(self.event_bus)
         
-        self.adapter = Adapter()
-        self.api = BotAPI(self.adapter.send)
+        # 服务管理器
+        self.services = ServiceManager()
         
-        # 事件分发器
-        self.dispatcher = EventDispatcher(self.event_bus, self.api)
-        self.adapter.set_event_callback(self.dispatcher)
+        # 注册内置服务（WebSocket 服务）
+        self.services.register(WebSocketService)
         
-        # 生命周期管理器（传入 self，因为 BotClient 现在就是 EventRegistry）
+        # API（延迟绑定 send 回调，在服务加载后绑定）
+        self.api: BotAPI = None  # 将在 _setup_api 中初始化
+        
+        # 事件分发器（延迟初始化）
+        self.dispatcher: EventDispatcher = None
+        
+        # 生命周期管理器
         self._lifecycle = LifecycleManager(
-            self.adapter, self.api, self.event_bus, self
+            self.services, self.event_bus, self
         )
         
         # 注册内置处理器
         self._register_builtin_handlers()
+    
+    async def _setup_api(self) -> None:
+        """设置 API（在服务加载后调用）"""
+        ws_service: WebSocketService = self.services.get("websocket")
+        if ws_service:
+            self.api = BotAPI(ws_service.send)
+            
+            # 事件分发器
+            self.dispatcher = EventDispatcher(self.event_bus, self.api)
+            ws_service.set_event_callback(self.dispatcher)
 
     def _register_builtin_handlers(self):
         """注册内置处理器"""
