@@ -3,6 +3,7 @@ from .media import *  # noqa: F401,F403
 from .forward import *  # noqa: F401,F403
 from .misc import *  # noqa: F401,F403
 from .base import *  # noqa: F401,F403
+from .message_array import MessageArray
 
 # 导出所有公开类
 __all__ = [
@@ -31,4 +32,6 @@ __all__ = [
     # forward
     "Node",
     "Forward",
+    # array
+    "MessageArray",
 ]

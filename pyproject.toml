@@ -63,3 +63,8 @@ write_to = "ncatbot/_version.py"
 write_to_template = "__version__ = \"{version}\"\n"
 fallback_version = "0+unknown"
 tag_regex = "^(?P<prefix>v)?(?P<version>\\d+\\.\\d+\\.\\d+.*)$"
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio>=0.24.0",
+]

@@ -174,7 +174,10 @@ class TestDataProvider:
         self._events: List[Dict[str, Any]] = []
         self._message_events: List[Dict[str, Any]] = []
         self._meta_events: List[Dict[str, Any]] = []
+        self._notice_events: List[Dict[str, Any]] = []
+        self._request_events: List[Dict[str, Any]] = []
         self._segments_by_type: Dict[str, List[Dict[str, Any]]] = {}
+        self._events_by_type: Dict[str, Dict[str, List[Dict[str, Any]]]] = {}
         self._data_loaded = False
         self._load_all_data()
     
@@ -197,8 +200,18 @@ class TestDataProvider:
         # 分类事件
         for event in self._events:
             post_type = event.get("post_type")
+            
+            # 初始化 post_type 的存储
+            if post_type not in self._events_by_type:
+                self._events_by_type[post_type] = {}
+            
             if post_type == "message":
                 self._message_events.append(event)
+                # 按 message_type 分类
+                msg_type = event.get("message_type", "unknown")
+                if msg_type not in self._events_by_type[post_type]:
+                    self._events_by_type[post_type][msg_type] = []
+                self._events_by_type[post_type][msg_type].append(event)
                 # 提取消息段
                 for seg in event.get("message", []):
                     seg_type = seg.get("type")
@@ -206,8 +219,35 @@ class TestDataProvider:
                         if seg_type not in self._segments_by_type:
                             self._segments_by_type[seg_type] = []
                         self._segments_by_type[seg_type].append(seg)
+                        
             elif post_type == "meta_event":
                 self._meta_events.append(event)
+                # 按 meta_event_type 分类
+                meta_type = event.get("meta_event_type", "unknown")
+                if meta_type not in self._events_by_type[post_type]:
+                    self._events_by_type[post_type][meta_type] = []
+                self._events_by_type[post_type][meta_type].append(event)
+                
+            elif post_type == "notice":
+                self._notice_events.append(event)
+                # 按 notice_type 或 sub_type (对于 notify) 分类
+                notice_type = event.get("notice_type", "unknown")
+                if notice_type == "notify":
+                    sub_type = event.get("sub_type", "unknown")
+                    key = f"notify_{sub_type}"
+                else:
+                    key = notice_type
+                if key not in self._events_by_type[post_type]:
+                    self._events_by_type[post_type][key] = []
+                self._events_by_type[post_type][key].append(event)
+                
+            elif post_type == "request":
+                self._request_events.append(event)
+                # 按 request_type 分类
+                req_type = event.get("request_type", "unknown")
+                if req_type not in self._events_by_type[post_type]:
+                    self._events_by_type[post_type][req_type] = []
+                self._events_by_type[post_type][req_type].append(event)
     
     @property
     def all_events(self) -> List[Dict[str, Any]]:
@@ -224,6 +264,16 @@ class TestDataProvider:
         """获取所有元事件"""
         return self._meta_events
     
+    @property
+    def notice_events(self) -> List[Dict[str, Any]]:
+        """获取所有通知事件"""
+        return self._notice_events
+    
+    @property
+    def request_events(self) -> List[Dict[str, Any]]:
+        """获取所有请求事件"""
+        return self._request_events
+    
     def get_segments_by_type(self, seg_type: str) -> List[Dict[str, Any]]:
         """获取指定类型的消息段"""
         return self._segments_by_type.get(seg_type, [])
@@ -239,6 +289,33 @@ class TestDataProvider:
         for segments in self._segments_by_type.values():
             all_segments.extend(segments)
         return all_segments
+    
+    def get_events_by_post_type(self, post_type: str) -> List[Dict[str, Any]]:
+        """获取指定 post_type 的所有事件"""
+        if post_type == "message":
+            return self._message_events
+        elif post_type == "meta_event":
+            return self._meta_events
+        elif post_type == "notice":
+            return self._notice_events
+        elif post_type == "request":
+            return self._request_events
+        return []
+    
+    def get_events_by_type(self, post_type: str, secondary_type: str) -> List[Dict[str, Any]]:
+        """获取指定 post_type 和二级类型的事件
+        
+        Args:
+            post_type: 一级类型 (message, meta_event, notice, request)
+            secondary_type: 二级类型 (private, group, heartbeat, lifecycle, poke 等)
+        """
+        if post_type not in self._events_by_type:
+            return []
+        return self._events_by_type[post_type].get(secondary_type, [])
+    
+    def get_notice_events_by_subtype(self, sub_type: str) -> List[Dict[str, Any]]:
+        """获取指定 sub_type 的 notify 事件 (如 poke, lucky_king 等)"""
+        return self.get_events_by_type("notice", f"notify_{sub_type}")
 
 
 @pytest.fixture(scope="session")
@@ -257,54 +334,6 @@ def _skip_if_no_data(data: List) -> None:
     """如果数据为空则跳过测试"""
     if not data:
         pytest.skip("测试数据不可用 - 请设置 NCATBOT_TEST_DATA_FILE 环境变量或确保 dev/data.txt 存在")
-
-
-@pytest.fixture
-def text_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """文本消息段数据（无数据时自动跳过测试）"""
-    segments = data_provider.get_segments_by_type("text")
-    _skip_if_no_data(segments)
-    return segments
-
-
-@pytest.fixture
-def image_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """图片消息段数据（无数据时自动跳过测试）"""
-    segments = data_provider.get_segments_by_type("image")
-    _skip_if_no_data(segments)
-    return segments
-
-
-@pytest.fixture
-def face_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """表情消息段数据（无数据时自动跳过测试）"""
-    segments = data_provider.get_segments_by_type("face")
-    _skip_if_no_data(segments)
-    return segments
-
-
-@pytest.fixture
-def at_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """@消息段数据（无数据时自动跳过测试）"""
-    segments = data_provider.get_segments_by_type("at")
-    _skip_if_no_data(segments)
-    return segments
-
-
-@pytest.fixture
-def reply_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """引用回复消息段数据（无数据时自动跳过测试）"""
-    segments = data_provider.get_segments_by_type("reply")
-    _skip_if_no_data(segments)
-    return segments
-
-
-@pytest.fixture
-def forward_segments(data_provider: TestDataProvider) -> List[Dict[str, Any]]:
-    """转发消息段数据（无数据时自动跳过测试）"""
-    segments = data_provider.get_segments_by_type("forward")
-    _skip_if_no_data(segments)
-    return segments
 
 
 @pytest.fixture

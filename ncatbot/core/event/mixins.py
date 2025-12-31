@@ -1,9 +1,9 @@
-from typing import Any
+from typing import Any, Optional
 from .context import ContextMixin
 
 class MessageActionMixin(ContextMixin):
     message_type: Any
-    group_id: Any
+    group_id: Optional[str] = None  # 私聊消息无 group_id
     user_id: Any
     message_id: Any
 
@@ -33,7 +33,7 @@ class GroupAdminMixin(ContextMixin):
 class RequestActionMixin(ContextMixin):
     request_type: Any
     flag: Any
-    sub_type: Any
+    sub_type: Optional[Any] = None  # FriendRequest 无 sub_type
 
     async def approve(self, remark: str = "", reason: str = ""):
         """统一处理请求同意"""

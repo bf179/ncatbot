@@ -4,6 +4,7 @@ from .enums import *
 from .models import *
 from .context import ContextMixin
 from .mixins import MessageActionMixin, GroupAdminMixin, RequestActionMixin
+from .message_segments import MessageArray
 
 # --- 基类 ---
 class BaseEvent(ContextMixin):
@@ -24,12 +25,19 @@ class MessageEvent(BaseEvent, MessageActionMixin):
     sub_type: str
     message_id: str
     user_id: str
-    message: Any # 建议后续定义为 List[MessageSegment]
+    message: MessageArray
     raw_message: str
     font: int = 0
 
     @field_validator("message_id", "user_id", mode="before")
     def _force_ids(cls, v): return str(v)
+    
+    @field_validator("message", mode="before")
+    def _convert_message(cls, v):
+        """将消息列表自动转换为 MessageArray"""
+        if isinstance(v, list):
+            return MessageArray.from_list(v)
+        return v
 
 class PrivateMessageEvent(MessageEvent):
     message_type: MessageType = Field(default=MessageType.PRIVATE)
@@ -39,7 +47,7 @@ class PrivateMessageEvent(MessageEvent):
 class GroupMessageEvent(MessageEvent, GroupAdminMixin):
     message_type: MessageType = Field(default=MessageType.GROUP)
     sub_type: str = Field(default="normal")
-    group_id: str
+    group_id: str # type: ignore
     anonymous: Optional[Anonymous] = None
     sender: GroupSender
 
@@ -102,7 +110,7 @@ class GroupRecallNoticeEvent(NoticeEvent):
     message_id: str
     
     @field_validator("operator_id", "message_id", mode="before")
-    def _ids(cls, v): return str(v)
+    def _recall_ids(cls, v): return str(v)
 
 class FriendRecallNoticeEvent(NoticeEvent):
     notice_type: NoticeType = Field(default=NoticeType.FRIEND_RECALL)
