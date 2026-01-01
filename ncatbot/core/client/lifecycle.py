@@ -219,7 +219,10 @@ class LifecycleManager:
             event.bind_api(self.api)
         
         # 构造事件类型
-        event_type = f"ncatbot.{event.post_type}"
+        if event.post_type == "message":
+            event_type = "ncatbot.message_event"
+        else:
+            event_type = f"ncatbot.{event.post_type}_event"
         ncatbot_event = NcatBotEvent(event_type, event)
         
         await self.event_bus.publish(ncatbot_event)

@@ -33,11 +33,11 @@ class MessagePreprocessor:
 
     def precheck(self, event: MessageEvent) -> Optional[PreprocessResult]:
         """提取首段文本，并根据配置判断是否进入命令解析流程。"""
-        if not event.message.messages:
+        if not event.message.message:
             return None
 
-        first = event.message.messages[0]
-        if getattr(first, "msg_seg_type", None) != "text":
+        first = event.message.message[0]
+        if getattr(first, "type", None) != "text":
             # 没有首段文本，不进入命令解析
             return None
 

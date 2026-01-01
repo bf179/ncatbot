@@ -33,19 +33,18 @@ class PluginConfigTestPlugin(NcatBotPlugin):
         # 注册命令
         from ncatbot.plugin_system import command_registry
 
-        @command_registry.command("config_test", description="配置测试命令")
+        @command_registry.command("config_test", description="配置测试命令", prefixes=["", "/"])
         async def config_test_command(event: GroupMessageEvent):
-            print(f"DEBUG: config_test command triggered for {self.name}")
             current_config = {
                 "test_string": self.config["test_string"],
                 "test_number": self.config["test_number"],
                 "test_bool": self.config["test_bool"]
             }
-            print(f"DEBUG: current config: {current_config}")
             await event.reply(f"当前配置: {current_config}")
 
-        @command_registry.command("config_set", description="设置配置")
+        @command_registry.command("config_set", description="设置配置", prefixes=["", "/"])
         async def config_set_command(event: GroupMessageEvent, key: str, value: str):
+            print(f"DEBUG: config_set called with key={key}, value={value}")
             try:
                 if key == "test_string":
                     self.set_config(key, value)
@@ -61,7 +60,7 @@ class PluginConfigTestPlugin(NcatBotPlugin):
             except Exception as e:
                 await event.reply(f"设置失败: {e}")
 
-        @command_registry.command("config_save", description="保存配置")
+        @command_registry.command("config_save", description="保存配置", prefixes=["", "/"])
         async def config_save_command(event: GroupMessageEvent):
             # 配置会自动保存，这里只是为了测试
             await event.reply("配置保存完成")

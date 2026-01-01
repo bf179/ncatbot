@@ -36,7 +36,7 @@ class MessageTokenizer:
         """
         tokens = []
 
-        for segment in message_array.messages:
+        for segment in message_array.message:
             if self._is_text_segment(segment):
                 # 文本段：使用 StringTokenizer 分析
                 text_tokenizer = StringTokenizer(segment.text)

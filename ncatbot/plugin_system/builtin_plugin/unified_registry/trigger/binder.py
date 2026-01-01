@@ -65,10 +65,11 @@ class ArgumentBinder:
             pw_idx = 0
             while skip_idx < len(elements) and pw_idx < len(pw):
                 el = elements[skip_idx]
-                if el.type == "text" and (
-                    str(el.content) == pw[pw_idx]
-                    or (el.content[0] in prefixes)
-                    and el.content[1:].startswith(pw[pw_idx])
+                content_str = getattr(el.content, 'text', str(el.content))
+                if el.type in ("text", "plaintext") and (
+                    content_str == pw[pw_idx]
+                    or (len(content_str) > 0 and content_str[0] in prefixes)
+                    and content_str[1:].startswith(pw[pw_idx])
                 ):
                     skip_idx += 1
                     pw_idx += 1

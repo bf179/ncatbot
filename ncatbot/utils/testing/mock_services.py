@@ -267,6 +267,16 @@ class MockPreUploadService(BaseService):
     def __init__(self, **config):
         super().__init__(**config)
         self._upload_history: List[dict] = []
+
+    @property
+    def available(self) -> bool:
+        """Mock 服务始终可用"""
+        return True
+
+    async def process_message_array(self, messages):
+        """Mock 消息数组处理，直接返回原消息"""
+        from ncatbot.core.service.builtin.preupload.processor import ProcessResult
+        return ProcessResult(success=True, data={"messages": messages})
     
     async def on_load(self) -> None:
         LOG.info("Mock 预上传服务已加载")
