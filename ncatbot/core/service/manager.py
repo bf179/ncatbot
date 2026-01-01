@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from .builtin import (
         MessageRouter,
         PreUploadService,
+        PluginConfigService,
+        RBACService
     )
 
 LOG = get_log("ServiceManager")
@@ -26,6 +28,7 @@ class ServiceManager:
     内置服务（支持 IDE 类型提示）：
         - message_router: MessageRouter - 消息路由服务
         - preupload: PreUploadService - 消息和文件预上传服务
+        - plugin_config: PluginConfigService - 插件配置服务
     
     使用示例：
         ```python
@@ -55,14 +58,24 @@ class ServiceManager:
     # -------------------------------------------------------------------------
     
     @property
-    def message_router(self) -> Optional["MessageRouter"]:
+    def message_router(self) -> "MessageRouter":
         """消息路由服务"""
         return self._services.get("message_router")  # type: ignore
     
     @property
-    def preupload(self) -> Optional["PreUploadService"]:
+    def preupload(self) -> "PreUploadService":
         """消息和文件预上传服务"""
         return self._services.get("preupload")  # type: ignore
+    
+    @property
+    def plugin_config(self) -> "PluginConfigService":
+        """插件配置服务"""
+        return self._services.get("plugin_config")  # type: ignore
+    
+    @property
+    def rbac(self) -> "RBACService":
+        """RBAC 服务"""
+        return self._services.get("rbac")  # type: ignore
     
     # -------------------------------------------------------------------------
     # 服务管理方法

@@ -10,6 +10,7 @@ from ncatbot.utils import get_log
 from ncatbot.utils.error import NcatBotError
 from ncatbot.core.api import BotAPI
 from ncatbot.core.service import ServiceManager, MessageRouter, PreUploadService
+from ncatbot.core.service.builtin import PluginConfigService
 
 from .event_bus import EventBus
 from .dispatcher import EventDispatcher
@@ -73,6 +74,7 @@ class BotClient(EventRegistry, LifecycleManager):
         # 注册内置服务
         self.services.register(MessageRouter)
         self.services.register(PreUploadService)
+        self.services.register(PluginConfigService)
         
         # API（延迟绑定 send 回调，在服务加载后绑定）
         self.api: BotAPI = None  # 将在 _setup_api 中初始化

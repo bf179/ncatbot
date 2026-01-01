@@ -100,9 +100,13 @@ class LifecycleManager:
 
         ncatbot_config.validate_config()
 
-        # 初始化插件系统
+        # 初始化插件系统（注入 ServiceManager）
         from ncatbot.plugin_system import PluginLoader
-        self.plugin_loader = PluginLoader(self.event_bus, debug=ncatbot_config.debug)
+        self.plugin_loader = PluginLoader(
+            self.event_bus,
+            self.services,
+            debug=ncatbot_config.debug,
+        )
         self._running = True
 
         # 加载插件

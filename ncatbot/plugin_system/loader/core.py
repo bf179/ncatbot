@@ -7,6 +7,7 @@ from ncatbot.utils import ncatbot_config, get_log, status
 
 from ..base_plugin import BasePlugin
 from ncatbot.core import EventBus
+from ncatbot.core.service import ServiceManager
 from ..pluginsys_err import (
     PluginDependencyError,
     PluginVersionError,
@@ -26,12 +27,21 @@ LOG = get_log("PluginLoader")
 class PluginLoader:
     """插件加载器：负责插件的加载、卸载、重载、生命周期管理。"""
 
-    def __init__(self, event_bus: EventBus, *, debug: bool = False) -> None:
+    def __init__(
+        self,
+        event_bus: EventBus,
+        service_manager: ServiceManager,
+        *,
+        debug: bool = False,
+    ) -> None:
         self.plugins: Dict[str, BasePlugin] = {}
         self.event_bus = event_bus or EventBus()
         self._debug = debug
         self._importer = _ModuleImporter(str(ncatbot_config.plugin.plugins_dir))
         self._resolver = _DependencyResolver()
+        
+        # 服务管理器由外部注入
+        self._service_manager = service_manager
 
         if debug:
             LOG.warning("插件系统已切换为调试模式")
@@ -62,12 +72,15 @@ class PluginLoader:
         """
         Instantiate plugin_class and initialize it. kwargs may contain manifest-derived
         metadata and other extras; they will be forwarded to the plugin constructor.
+        
+        注入 service_manager，插件通过它获取各种服务。
         """
         plugin = plugin_class(
             event_bus=self.event_bus,
             debug=self._debug,
             plugin_loader=self,
             name=name,
+            service_manager=self._service_manager,
             **kwargs,
         )
         # Ensure name is set (may be provided via manifest)
@@ -169,7 +182,6 @@ class PluginLoader:
 
     async def unload_all(self, **kwargs) -> None:
         """一键异步卸载全部插件。"""
-        # RBAC 服务会在 on_close 时自动保存数据
         await asyncio.gather(
             *(self.unload_plugin(name, **kwargs) for name in list(self.plugins))
         )

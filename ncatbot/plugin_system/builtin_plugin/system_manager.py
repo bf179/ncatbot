@@ -208,16 +208,23 @@ class SystemManager(NcatBotPlugin):
         plugin = self.get_plugin(plugin_name)
         if not plugin:
             await event.reply(f"未找到插件 {plugin_name}")
+            return
         configs = plugin.get_registered_configs()
         if config_name not in configs:
             await event.reply(f"插件 {plugin_name} 未注册配置 {config_name}")
-        from ..builtin_mixin.config_mixin import Config
-
-        config: Config = configs[config_name]
-        oldvalue, newvalue = config.update(value)
-        if config.on_change:
-            run_coroutine(config.on_change, oldvalue, newvalue)
-        await event.reply(f"插件 {plugin_name} 配置 {config_name} 更新为 {value}")
+            return
+        
+        # 使用 ConfigMixin 提供的接口
+        if hasattr(plugin, 'set_config'):
+            oldvalue, newvalue = plugin.set_config(config_name, value)
+            
+            # 触发变更回调
+            config_item = configs.get(config_name)
+            if config_item and hasattr(config_item, 'on_change') and config_item.on_change:
+                run_coroutine(config_item.on_change, oldvalue, newvalue)
+            await event.reply(f"插件 {plugin_name} 配置 {config_name} 更新为 {newvalue}")
+        else:
+            await event.reply(f"插件 {plugin_name} 不支持配置修改")
 
     async def unload_plugin(self, event: NcatBotEvent) -> bool:
         """卸载插件, 可以把自己卸了"""
