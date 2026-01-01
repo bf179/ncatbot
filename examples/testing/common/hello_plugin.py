@@ -2,8 +2,8 @@
 HelloPlugin - 用于测试文档验证的简单插件
 """
 
-from ncatbot.plugin_system.builtin_mixin.ncatbot_plugin import NcatBotPlugin
-from ncatbot.core.event import BaseMessageEvent
+from ncatbot.plugin_system import NcatBotPlugin
+from ncatbot.core import MessageEvent
 from ncatbot.plugin_system import command_registry, param, option
 
 
@@ -18,7 +18,7 @@ class HelloPlugin(NcatBotPlugin):
         pass
 
     @command_registry.command("hello", aliases=["hi"], description="问候")
-    async def hello_command(self, event: BaseMessageEvent):
+    async def hello_command(self, event: MessageEvent):
         await event.reply("你好！这是来自 HelloPlugin 的问候。")
 
     @command_registry.command("echo", description="回显文本")
@@ -26,7 +26,7 @@ class HelloPlugin(NcatBotPlugin):
     @option(short_name="v", long_name="verbose", help="详细输出")
     async def echo_command(
         self,
-        event: BaseMessageEvent,
+        event: MessageEvent,
         text: str,
         lang: str = "zh",
         verbose: bool = False,

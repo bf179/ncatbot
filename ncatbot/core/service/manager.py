@@ -85,6 +85,8 @@ class ServiceManager:
             raise KeyError(f"服务 {service_name} 未注册")
         
         service = self._service_classes[service_name](**self._service_configs[service_name])
+        # 注入 ServiceManager 到服务中
+        service.service_manager = self
         await service._load()
         self._services[service_name] = service
         return service

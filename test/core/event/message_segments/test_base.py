@@ -4,13 +4,13 @@ base.py 模块测试 - 测试 MessageSegment 基类和核心解析功能
 import pytest
 from typing import Dict, Any, List
 
-from ncatbot.core.event.message_segments.base import (
+from ncatbot.core import (
     MessageSegment,
     MessageArrayDTO,
     parse_message_segment,
     TYPE_MAP,
 )
-from ncatbot.core.event.message_segments.primitives import PlainText, Face, At, Reply
+from ncatbot.core import PlainText, Face, At, Reply
 
 
 class TestMessageSegmentBase:

@@ -4,7 +4,7 @@ models.py 模块测试 - 测试数据模型
 import pytest
 from typing import Dict, Any
 
-from ncatbot.core.event.models import (
+from ncatbot.core import (
     BaseDataModel,
     BaseSender,
     GroupSender,

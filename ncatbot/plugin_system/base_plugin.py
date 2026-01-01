@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Set, Union, TYPE_CHECKING
 from concurrent.futures import ThreadPoolExecutor
 
 from .config import config
-from .event import EventBus, NcatBotEvent
+from ncatbot.core import EventBus, NcatBotEvent
 from .rbac import RBACManager
 from ncatbot.utils import status, get_log
 from ncatbot.core.api import BotAPI

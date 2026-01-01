@@ -12,10 +12,10 @@ from ..utils import APIComponent, APIReturnStatus, check_exclusive_argument
 
 if TYPE_CHECKING:
     from ..client import IAPIClient
-    from ncatbot.core.event import (
+    from ncatbot.core import (
         GroupMessageEvent,
         PrivateMessageEvent,
-        BaseMessageEvent,
+        MessageEvent,
         Forward,
         Record,
         Image,
@@ -49,7 +49,7 @@ class MessageRetrieveMixin(APIComponent):
         Returns:
             List[GroupMessageEvent]: 消息列表
         """
-        from ncatbot.core.event import GroupMessageEvent
+        from ncatbot.core import GroupMessageEvent
 
         data = {
             "group_id": group_id,
@@ -63,7 +63,7 @@ class MessageRetrieveMixin(APIComponent):
         status = APIReturnStatus(result)
         return [GroupMessageEvent(**data) for data in status.data.get("messages", [])]
 
-    async def get_msg(self, message_id: Union[str, int]) -> "BaseMessageEvent":
+    async def get_msg(self, message_id: Union[str, int]) -> "MessageEvent":
         """
         获取消息详情
 
@@ -71,9 +71,9 @@ class MessageRetrieveMixin(APIComponent):
             message_id: 消息 ID
 
         Returns:
-            BaseMessageEvent: 消息事件对象
+            MessageEvent: 消息事件对象
         """
-        from ncatbot.core.event import GroupMessageEvent
+        from ncatbot.core import GroupMessageEvent
 
         result = await self._request_raw(
             "/get_msg",
@@ -92,7 +92,7 @@ class MessageRetrieveMixin(APIComponent):
         Returns:
             Forward: 合并转发消息对象
         """
-        from ncatbot.core.event import Forward
+        from ncatbot.core import Forward
 
         result = await self._request_raw(
             "/get_forward_msg",
@@ -120,7 +120,7 @@ class MessageRetrieveMixin(APIComponent):
         Returns:
             List[PrivateMessageEvent]: 消息列表
         """
-        from ncatbot.core.event import PrivateMessageEvent
+        from ncatbot.core import PrivateMessageEvent
 
         result = await self._request_raw(
             "/get_friend_msg_history",
@@ -153,7 +153,7 @@ class MessageRetrieveMixin(APIComponent):
         Returns:
             Record: 语音消息段对象
         """
-        from ncatbot.core.event import Record
+        from ncatbot.core import Record
 
         check_exclusive_argument(file, file_id, names=["file", "file_id"])
         result = await self._request_raw(
@@ -179,7 +179,7 @@ class MessageRetrieveMixin(APIComponent):
         Returns:
             Image: 图片消息段对象
         """
-        from ncatbot.core.event import Image
+        from ncatbot.core import Image
 
         check_exclusive_argument(file, file_id, names=["file", "file_id"])
         result = await self._request_raw(

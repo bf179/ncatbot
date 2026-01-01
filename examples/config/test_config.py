@@ -1,6 +1,6 @@
 from ncatbot.utils.testing import TestClient, TestHelper
 from ncatbot.plugin_system import command_registry, NcatBotPlugin
-from ncatbot.core import BaseMessageEvent
+from ncatbot.core import MessageEvent
 
 
 class ConfigTestPlugin(NcatBotPlugin):
@@ -14,11 +14,11 @@ class ConfigTestPlugin(NcatBotPlugin):
         )
 
     @command_registry.command("get_counter", aliases=["gc"])
-    async def get_counter(self, event: BaseMessageEvent) -> int:
+    async def get_counter(self, event: MessageEvent) -> int:
         print(self.config["counter"])
 
     @command_registry.command("increment_counter", aliases=["ic"])
-    async def increment_counter(self, event: BaseMessageEvent) -> int:
+    async def increment_counter(self, event: MessageEvent) -> int:
         self.config["counter"] += 1
 
 

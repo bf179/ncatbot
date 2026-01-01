@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, AsyncMock, patch
 
 from ncatbot.core.client.dispatcher import EventDispatcher, parse_event_type
 from ncatbot.core.client.event_bus import EventBus
-from ncatbot.core.event.enums import EventType, PostType
+from ncatbot.core import EventType, PostType
 
 
 class TestParseEventType:

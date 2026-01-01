@@ -3,8 +3,8 @@ MessageArray 构造和构建器测试 - 测试初始化和链式构建方法
 """
 import pytest
 
-from ncatbot.core.event.message_segments.message_array import MessageArray
-from ncatbot.core.event.message_segments.primitives import PlainText, At, Face, Reply
+from ncatbot.core import MessageArray
+from ncatbot.core import PlainText, At, Face, Reply
 
 
 class TestMessageArrayConstruction:

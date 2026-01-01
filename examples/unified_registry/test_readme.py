@@ -5,7 +5,7 @@ from ncatbot.plugin_system import NcatBotPlugin
 from ncatbot.plugin_system import command_registry
 from ncatbot.plugin_system import group_filter, admin_filter
 from ncatbot.plugin_system import option, param
-from ncatbot.core.event import BaseMessageEvent
+from ncatbot.core import MessageEvent
 
 
 class ReadmeDemoPlugin(NcatBotPlugin):
@@ -16,12 +16,12 @@ class ReadmeDemoPlugin(NcatBotPlugin):
         pass
 
     @command_registry.command("hello")
-    async def hello_cmd(self, event: BaseMessageEvent):
+    async def hello_cmd(self, event: MessageEvent):
         await event.reply("Hello, World!")
 
     @group_filter
     @command_registry.command("kick")
-    async def kick_cmd(self, event: BaseMessageEvent, user_id: str):
+    async def kick_cmd(self, event: MessageEvent, user_id: str):
         await event.reply(f"踢出用户: {user_id}")
 
     @admin_filter
@@ -30,7 +30,7 @@ class ReadmeDemoPlugin(NcatBotPlugin):
     @param(name="env", default="dev", help="部署环境")
     async def deploy_cmd(
         self,
-        event: BaseMessageEvent,
+        event: MessageEvent,
         app_name: str,
         env: str = "dev",
         verbose: bool = False,

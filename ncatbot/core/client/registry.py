@@ -12,8 +12,7 @@ NcatBot Event: 订阅的事件触发的回调是 NcatBotEvent(带类型 type 和
 import inspect
 from typing import Callable, Optional, Type, Literal, TYPE_CHECKING
 
-from ncatbot.core.event import MessageSegment
-from ncatbot.core.event.enums import EventType
+from ..event.enums import EventType
 from .ncatbot_event import NcatBotEvent
 from ..event import GroupMessageEvent, PrivateMessageEvent, GroupRequestEvent, FriendRequestEvent
 from ..event import MessageSegment

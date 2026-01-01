@@ -8,8 +8,8 @@ import traceback
 from typing import TYPE_CHECKING, Optional
 
 from ncatbot.utils import get_log
-from ncatbot.core.event import EventParser
-from ncatbot.core.event.enums import PostType, EventType
+from ..event.parser import EventParser
+from ..event.enums import PostType, EventType
 
 if TYPE_CHECKING:
     from .event_bus import EventBus

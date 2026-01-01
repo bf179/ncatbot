@@ -1,6 +1,6 @@
 from ncatbot.utils import get_log
 from ..utils import FuncSpec
-from ncatbot.core.event import BaseMessageEvent
+from ncatbot.core import MessageEvent
 import inspect
 
 LOG = get_log(__name__)
@@ -27,7 +27,7 @@ class SigValidator:
 
         first_param = self.descriptor.param_list[0]
 
-        # 形态一：实例方法，要求参数形如 (self, event: BaseMessageEvent, ...)
+        # 形态一：实例方法，要求参数形如 (self, event: MessageEvent, ...)
         if first_param.name == "self":
             if len(self.descriptor.param_list) < 2:
                 LOG.error(
@@ -42,53 +42,53 @@ class SigValidator:
             event_param = self.descriptor.param_list[1]
             if event_param.annotation == inspect.Parameter.empty:
                 LOG.error(
-                    f"event 参数缺少类型注解: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 需要 BaseMessageEvent 或其子类注解"
+                    f"event 参数缺少类型注解: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 需要 MessageEvent 或其子类注解"
                 )
                 LOG.info(
                     f"函数来自 {self.descriptor.func_module}.{self.descriptor.func_qualname}"
                 )
                 raise ValueError(
-                    f"event 参数缺少类型注解: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 需要 BaseMessageEvent 或其子类注解"
+                    f"event 参数缺少类型注解: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 需要 MessageEvent 或其子类注解"
                 )
             if not (
                 isinstance(event_param.annotation, type)
-                and issubclass(event_param.annotation, BaseMessageEvent)
+                and issubclass(event_param.annotation, MessageEvent)
             ):
                 LOG.error(
-                    f"event 参数类型注解错误: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 注解为 {event_param.annotation}，需要 BaseMessageEvent 或其子类"
+                    f"event 参数类型注解错误: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 注解为 {event_param.annotation}，需要 MessageEvent 或其子类"
                 )
                 LOG.info(
                     f"函数来自 {self.descriptor.func_module}.{self.descriptor.func_qualname}"
                 )
                 raise ValueError(
-                    f"event 参数类型注解错误: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 注解为 {event_param.annotation}，需要 BaseMessageEvent 或其子类"
+                    f"event 参数类型注解错误: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 注解为 {event_param.annotation}，需要 MessageEvent 或其子类"
                 )
             self.event_param_index = 1
         else:
-            # 形态二：普通/静态方法，要求(event: BaseMessageEvent, ...)
+            # 形态二：普通/静态方法，要求(event: MessageEvent, ...)
             event_param = first_param
             if event_param.annotation == inspect.Parameter.empty:
                 LOG.error(
-                    f"event 参数缺少类型注解: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 需要 BaseMessageEvent 或其子类注解"
+                    f"event 参数缺少类型注解: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 需要 MessageEvent 或其子类注解"
                 )
                 LOG.info(
                     f"函数来自 {self.descriptor.func_module}.{self.descriptor.func_qualname}"
                 )
                 raise ValueError(
-                    f"event 参数缺少类型注解: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 需要 BaseMessageEvent 或其子类注解"
+                    f"event 参数缺少类型注解: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 需要 MessageEvent 或其子类注解"
                 )
             if not (
                 isinstance(event_param.annotation, type)
-                and issubclass(event_param.annotation, BaseMessageEvent)
+                and issubclass(event_param.annotation, MessageEvent)
             ):
                 LOG.error(
-                    f"event 参数类型注解错误: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 注解为 {event_param.annotation}，需要 BaseMessageEvent 或其子类"
+                    f"event 参数类型注解错误: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 注解为 {event_param.annotation}，需要 MessageEvent 或其子类"
                 )
                 LOG.info(
                     f"函数来自 {self.descriptor.func_module}.{self.descriptor.func_qualname}"
                 )
                 raise ValueError(
-                    f"event 参数类型注解错误: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 注解为 {event_param.annotation}，需要 BaseMessageEvent 或其子类"
+                    f"event 参数类型注解错误: {self.descriptor.func_qualname} 的参数 '{event_param.name}' 注解为 {event_param.annotation}，需要 MessageEvent 或其子类"
                 )
             self.event_param_index = 0
 

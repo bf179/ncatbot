@@ -43,7 +43,7 @@ class PrivateMusicMixin(APIComponent):
         Returns:
             str: 消息 ID
         """
-        from ncatbot.core.event import Music
+        from ncatbot.core import Music
 
         music = Music(type=type, id=id)
         result = await self._request_raw(
@@ -76,7 +76,7 @@ class PrivateMusicMixin(APIComponent):
         Returns:
             str: 消息 ID
         """
-        from ncatbot.core.event import Music
+        from ncatbot.core import Music
 
         music = Music(
             type="custom",

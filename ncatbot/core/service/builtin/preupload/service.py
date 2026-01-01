@@ -1,12 +1,11 @@
 """
-预上传服务 - 提供统一的预上传功能入口，自己维护独立的 WebSocket 连接。
+预上传服务 - 提供统一的预上传功能入口，使用 message_router 的连接。
 """
 
 from typing import Any, Dict, List, Optional
 
 from ncatbot.utils import get_log
 from ...base import BaseService
-from .upload_connection import UploadConnection
 from .client import StreamUploadClient, UploadResult
 from .processor import MessagePreUploadProcessor, ProcessResult
 from .result import PreUploadResult
@@ -20,43 +19,44 @@ LOG = get_log("PreUploadService")
 
 
 class PreUploadService(BaseService):
-    """预上传服务 - 消息预上传 + 文件预上传，维护独立的 WebSocket 连接。"""
+    """预上传服务 - 消息预上传 + 文件预上传，使用 message_router 的连接。"""
     
     name = "preupload"
     description = "消息和文件预上传服务"
     
     def __init__(
         self,
-        uri: Optional[str] = None,
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         file_retention: int = DEFAULT_FILE_RETENTION,
         **config
     ):
         super().__init__(**config)
-        self._uri = uri
         self._chunk_size = chunk_size
         self._file_retention = file_retention
-        self._connection: Optional[UploadConnection] = None
         self._client: Optional[StreamUploadClient] = None
         self._message_processor: Optional[MessagePreUploadProcessor] = None
     
     async def on_load(self) -> None:
-        """服务加载 - 建立独立的 WebSocket 连接"""
-        self._connection = UploadConnection(uri=self._uri)
-        await self._connection.connect()
+        """服务加载 - 使用 message_router 的连接"""
+        if not self.service_manager:
+            raise RuntimeError("PreUploadService 需要 ServiceManager 注入")
+        
+        # 获取 message_router 服务
+        message_router = self.service_manager.message_router
+        if not message_router:
+            raise RuntimeError("PreUploadService 依赖 message_router 服务，请先注册并加载")
+        
+        # 使用 message_router 创建客户端
         self._client = StreamUploadClient(
-            self._connection, self._chunk_size, self._file_retention
+            message_router, self._chunk_size, self._file_retention
         )
         self._message_processor = MessagePreUploadProcessor(self._client)
-        LOG.info("预上传服务已加载")
+        LOG.info("预上传服务已加载（使用 message_router 连接）")
     
     async def on_close(self) -> None:
         """服务关闭"""
         self._message_processor = None
         self._client = None
-        if self._connection:
-            await self._connection.disconnect()
-            self._connection = None
         LOG.info("预上传服务已关闭")
     
     # -------------------------------------------------------------------------

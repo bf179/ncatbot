@@ -3,13 +3,13 @@ CQ 码解析测试 - 测试 parse_cq_code_to_onebot11 和 parse_message_segments
 """
 import pytest
 
-from ncatbot.core.event.message_segments.message_array import (
+from ncatbot.core import (
     AtAll,
     parse_cq_code_to_onebot11,
     parse_message_segments,
 )
-from ncatbot.core.event.message_segments.primitives import PlainText, At, Face
-from ncatbot.core.event.message_segments.base import MessageSegment
+from ncatbot.core import PlainText, At, Face
+from ncatbot.core import MessageSegment
 
 
 class TestParseCQCodeToOneBot11:

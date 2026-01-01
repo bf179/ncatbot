@@ -1,6 +1,6 @@
 """Plugin main file."""
 
-from ncatbot.core import BaseMessageEvent
+from ncatbot.core import MessageEvent
 from ncatbot.plugin_system import NcatBotPlugin
 from ncatbot.plugin_system import command_registry
 
@@ -28,10 +28,10 @@ class Plugin(NcatBotPlugin):
         )
 
     @command_registry.command("test", description="测试命令")
-    async def test_command(self, event: BaseMessageEvent):
+    async def test_command(self, event: MessageEvent):
         """测试功能处理函数."""
         await event.reply(f"测试功能调用成功！当前问候语: {self.config['greeting']}")
 
-    async def on_greeting_change(self, value, event: BaseMessageEvent):
+    async def on_greeting_change(self, value, event: MessageEvent):
         """配置变更回调函数."""
         await event.reply(f"问候语已修改为: {value}")

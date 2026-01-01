@@ -4,7 +4,7 @@
 import pytest
 from typing import Dict, Any
 
-from ncatbot.core.event.events import (
+from ncatbot.core import (
     NoticeEvent,
     GroupUploadNoticeEvent,
     GroupAdminNoticeEvent,
@@ -19,7 +19,7 @@ from ncatbot.core.event.events import (
     LuckyKingNotifyEvent,
     HonorNotifyEvent,
 )
-from ncatbot.core.event.enums import PostType, NoticeType
+from ncatbot.core import PostType, NoticeType
 
 
 class TestGroupRecallNotice:

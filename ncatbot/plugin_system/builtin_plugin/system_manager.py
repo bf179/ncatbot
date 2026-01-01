@@ -1,8 +1,6 @@
 from ..builtin_mixin import NcatBotPlugin
-from .unified_registry import command_registry, filter_registry, root_filter
-from .unified_registry.command_system.registry import option_group
-from ..event.event import NcatBotEventFactory, NcatBotEvent
-from ncatbot.core.event import BaseMessageEvent
+from .unified_registry import command_registry, filter_registry, root_filter, option_group
+from ncatbot.core import MessageEvent, NcatBotEvent, NcatBotEventFactory
 import psutil
 import ncatbot
 from ncatbot.utils import get_log, PermissionGroup, run_coroutine, config
@@ -165,7 +163,7 @@ class SystemManager(NcatBotPlugin):
 
     @command_registry.command("ncatbot_status", aliases=["ncs"])
     @root_filter
-    async def get_status(self, event: BaseMessageEvent) -> None:
+    async def get_status(self, event: MessageEvent) -> None:
         text = "ncatbot 状态:\n"
         text += f"插件数量: {len(self._loader.plugins)}\n"
         text += f"插件列表: {', '.join([plugin.name for plugin in self._loader.plugins.values()])}\n"
@@ -177,7 +175,7 @@ class SystemManager(NcatBotPlugin):
 
     @command_registry.command("ncatbot_help", aliases=["nch"])
     @root_filter
-    async def get_help(self, event: BaseMessageEvent) -> None:
+    async def get_help(self, event: MessageEvent) -> None:
         text = "ncatbot 帮助:\n"
         text += "/ncs 查看ncatbot状态\n"
         text += "/nch 查看ncatbot帮助\n"
@@ -190,7 +188,7 @@ class SystemManager(NcatBotPlugin):
     )
     @root_filter
     async def set_admin(
-        self, event: BaseMessageEvent, user_id: str, set: str = "add"
+        self, event: MessageEvent, user_id: str, set: str = "add"
     ) -> None:
         if user_id.startswith("At"):
             user_id = user_id.split("=")[1].split('"')[1]
@@ -207,7 +205,7 @@ class SystemManager(NcatBotPlugin):
     @command_registry.command("set_config", aliases=["cfg"])
     @filter_registry.admin_filter
     async def set_config(
-        self, event: BaseMessageEvent, plugin_name: str, config_name: str, value: str
+        self, event: MessageEvent, plugin_name: str, config_name: str, value: str
     ) -> None:
         plugin = self.get_plugin(plugin_name)
         if not plugin:

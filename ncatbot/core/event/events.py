@@ -43,6 +43,7 @@ class MessageEvent(BaseEvent, MessageActionMixin):
     user_id: str
     message: MessageArray
     raw_message: str
+    sender: BaseSender
     font: int = 0
 
     @field_validator("message_id", "user_id", mode="before")
@@ -54,6 +55,10 @@ class MessageEvent(BaseEvent, MessageActionMixin):
         if isinstance(v, list):
             return MessageArray.from_list(v)
         return v
+
+    def is_group_event(self) -> bool:
+        """检查是否为群聊消息"""
+        return self.message_type == MessageType.GROUP
 
 class PrivateMessageEvent(MessageEvent):
     message_type: MessageType = Field(default=MessageType.PRIVATE)

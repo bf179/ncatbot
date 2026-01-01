@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from ncatbot.core.event import MessageSegment
+from ncatbot.core import MessageSegment
 from ncatbot.utils import get_log
 from ..utils import CommandRegistrationError
 from ..utils import CommandSpec, OptionSpec, OptionGroupSpec, ParameterSpec, FuncSpec

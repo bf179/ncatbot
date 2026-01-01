@@ -1,14 +1,19 @@
 """内置过滤器实现 v2.0"""
 
 from typing import TYPE_CHECKING, Callable, Optional, Union, Iterable
-from ncatbot.core import BaseMessageEvent, MessageSentEvent
+from ncatbot.core import MessageEvent, MessageSentEvent
 from ncatbot.utils import status
 from ncatbot.utils.assets.literals import PermissionGroup
 from .base import BaseFilter
 
+__all__ = [
+    "GroupFilter", "PrivateFilter", "MessageSentFilter", "AdminFilter",
+    "GroupAdminFilter", "GroupOwnerFilter", "RootFilter", "NonSelfFilter",
+    "TrueFilter", "CustomFilter",
+]
 
 if TYPE_CHECKING:
-    from ncatbot.core.event import BaseMessageEvent
+    from ncatbot.core import MessageEvent
 
 
 class GroupFilter(BaseFilter):
@@ -17,7 +22,7 @@ class GroupFilter(BaseFilter):
     def __init__(
         self,
         allowed: Optional[Union[str, int, Iterable[Union[str, int]]]] = None,
-        name: str = None,
+        name: Optional[str] = None,
     ):
         """
         初始化 GroupFilter
@@ -39,7 +44,7 @@ class GroupFilter(BaseFilter):
                 except TypeError:
                     raise TypeError("allowed must be str|int or an iterable of str|int")
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         """检查是否为群聊消息且（可选）群号在允许列表中"""
         if not event.is_group_event():
             return False
@@ -54,7 +59,7 @@ class GroupFilter(BaseFilter):
 class PrivateFilter(BaseFilter):
     """私聊消息过滤器"""
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         """检查是否为私聊消息"""
         return not event.is_group_event()
 
@@ -62,7 +67,7 @@ class PrivateFilter(BaseFilter):
 class MessageSentFilter(BaseFilter):
     """自身上报消息过滤器"""
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         """检查是否为自身上报的消息"""
         return isinstance(event, MessageSentEvent)
 
@@ -70,7 +75,7 @@ class MessageSentFilter(BaseFilter):
 class AdminFilter(BaseFilter):
     """管理员权限过滤器"""
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         """检查用户是否有管理员权限"""
         if not status.global_access_manager:
             return False
@@ -86,7 +91,7 @@ class AdminFilter(BaseFilter):
 class GroupAdminFilter(BaseFilter):
     """群管理员权限过滤器"""
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         """检查用户是否为群管理员"""
         group_id = getattr(event, "group_id", None)
         if not group_id:  # 不是群事件
@@ -100,7 +105,7 @@ class GroupAdminFilter(BaseFilter):
 class GroupOwnerFilter(BaseFilter):
     """群主权限过滤器"""
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         """检查用户是否为群主"""
         # 与 GroupAdminFilter 类似，考虑重构
         group_id = getattr(event, "group_id", None)
@@ -115,7 +120,7 @@ class GroupOwnerFilter(BaseFilter):
 class RootFilter(BaseFilter):
     """Root权限过滤器"""
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         """检查用户是否有root权限"""
         if not status.global_access_manager:
             return False
@@ -129,31 +134,31 @@ class RootFilter(BaseFilter):
 class NonSelfFilter(BaseFilter):
     """非自身消息过滤器"""
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         return not isinstance(event, MessageSentEvent)
 
 
 class TrueFilter(BaseFilter):
     """True过滤器, 用于注册发送消息时调用的功能"""
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         return True
 
 
 class CustomFilter(BaseFilter):
     """自定义函数过滤器包装器"""
 
-    def __init__(self, filter_func: Callable[[BaseMessageEvent], bool], name: str = ""):
+    def __init__(self, filter_func: Callable[[MessageEvent], bool], name: str = ""):
         """初始化自定义过滤器
 
         Args:
-            filter_func: 过滤器函数，签名为 (event: BaseMessageEvent) -> bool
+            filter_func: 过滤器函数，签名为 (event: MessageEvent) -> bool
             name: 过滤器名称
         """
 
         super().__init__(name or getattr(filter_func, "__name__", "custom"))
         self.filter_func = filter_func
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         """执行自定义过滤器检查"""
         return self.filter_func(event)

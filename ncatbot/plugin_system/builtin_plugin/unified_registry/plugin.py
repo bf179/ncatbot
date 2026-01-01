@@ -3,11 +3,10 @@
 import asyncio
 import traceback
 from typing import Dict, Callable, TYPE_CHECKING, List, Tuple, Optional
-from ncatbot.plugin_system.builtin_plugin.unified_registry.command_system.utils import (
+from .command_system.utils import (
     CommandSpec,
 )
-from ncatbot.plugin_system.event.event import NcatBotEvent
-from ncatbot.core.event import BaseMessageEvent, BaseEvent
+
 from ncatbot.utils import get_log
 from ...builtin_mixin import NcatBotPlugin
 from .trigger.binder import BindResult
@@ -15,15 +14,16 @@ from .trigger.preprocessor import MessagePreprocessor, PreprocessResult
 from .command_system.lexer.tokenizer import StringTokenizer, Token
 from .trigger.resolver import CommandResolver
 from .trigger.binder import ArgumentBinder
-from .filter_system import filter_registry, FilterValidator
+from .filter_system import filter_registry
+from .filter_system.validator import FilterValidator
 from .command_system.registry.registry import command_registry
 from .legacy_registry import legacy_registry
+from ncatbot.core import NcatBotEvent
 
 # 兼容别名
-BaseEventData = BaseEvent
 
 if TYPE_CHECKING:
-    pass
+    from ncatbot.core import MessageEvent, BaseEvent
 
 LOG = get_log("UnifiedRegistry")
 
@@ -79,7 +79,7 @@ class UnifiedRegistryPlugin(NcatBotPlugin):
         # TODO: 实现大小写敏感（可能永远不会做）
         return s
 
-    async def handle_plugin_unload_event(self, event: NcatBotEvent) -> None:
+    async def handle_plugin_unload_event(self, event: "NcatBotEvent") -> None:
         """处理插件卸载事件，清理相关缓存"""
         LOG.debug(f"处理插件卸载事件: {event.data['name']}")
         self._initialized = False
@@ -87,7 +87,7 @@ class UnifiedRegistryPlugin(NcatBotPlugin):
         self.filter_registry.revoke_plugin(event.data["name"])
         self.initialize_if_needed()
 
-    async def handle_plugin_load_event(self, event: NcatBotEvent) -> None:
+    async def handle_plugin_load_event(self, event: "NcatBotEvent") -> None:
         """处理插件加载事件，清理相关缓存"""
         self._initialized = False
         self.initialize_if_needed()
@@ -115,7 +115,7 @@ class UnifiedRegistryPlugin(NcatBotPlugin):
             LOG.info(f"{traceback.format_exc()}")
             return False
 
-    async def _run_pure_filters(self, event: "BaseMessageEvent") -> None:
+    async def _run_pure_filters(self, event: "MessageEvent") -> None:
         """遍历执行纯过滤器函数（不含命令函数）。"""
         for func in filter_registry._function_filters.values():
             # 额外防御：若误标记，仍跳过命令函数
@@ -123,7 +123,7 @@ class UnifiedRegistryPlugin(NcatBotPlugin):
                 continue
             await self._execute_function(func, event)
 
-    async def _run_command(self, event: "BaseMessageEvent") -> None:
+    async def _run_command(self, event: "MessageEvent") -> None:
         # 前置检查与提取首段文本（用于前缀与命令词匹配）
         pre: Optional[PreprocessResult] = self._preprocessor.precheck(event)
         if pre is None:
@@ -170,7 +170,7 @@ class UnifiedRegistryPlugin(NcatBotPlugin):
             func, event, *bind_result.args, **bind_result.named_args
         )
 
-    async def handle_message_event(self, event: NcatBotEvent) -> bool:
+    async def handle_message_event(self, event: "NcatBotEvent") -> bool:
         """处理消息事件（命令和过滤器）"""
         # 惰性初始化
         self.initialize_if_needed()
@@ -242,9 +242,9 @@ class UnifiedRegistryPlugin(NcatBotPlugin):
             f"TriggerEngine 初始化完成：命令={len(filtered_commands)}, 别名={len(filtered_aliases)}"
         )
 
-    async def handle_legacy_event(self, event: NcatBotEvent) -> bool:
+    async def handle_legacy_event(self, event: "NcatBotEvent") -> bool:
         """处理通知和请求事件"""
-        event_data: BaseEventData = event.data
+        event_data: "BaseEvent" = event.data
         if event_data.post_type == "notice":
             for func in legacy_registry._notice_event:
                 await self._execute_function(func, event_data)

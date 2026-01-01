@@ -20,17 +20,17 @@ from ncatbot.core.service.builtin.preupload.constants import (
 
 
 @pytest.fixture
-def mock_ws_service():
-    """创建模拟的 WebSocket 服务"""
-    ws = MagicMock()
-    ws.send = AsyncMock()
-    return ws
+def mock_message_router():
+    """创建模拟的 MessageRouter"""
+    router = MagicMock()
+    router.send = AsyncMock()
+    return router
 
 
 @pytest.fixture
-def upload_client(mock_ws_service):
+def upload_client(mock_message_router):
     """创建上传客户端"""
-    return StreamUploadClient(mock_ws_service, chunk_size=1024)
+    return StreamUploadClient(mock_message_router, chunk_size=1024)
 
 
 @pytest.fixture
@@ -99,10 +99,10 @@ class TestUploadFile:
     """测试文件上传"""
     
     @pytest.mark.asyncio
-    async def test_upload_success(self, upload_client, mock_ws_service, temp_file):
+    async def test_upload_success(self, upload_client, mock_message_router, temp_file):
         """测试成功上传"""
         # 模拟分片上传响应
-        mock_ws_service.send.side_effect = [
+        mock_message_router.send.side_effect = [
             {"status": "ok", "data": {"received_chunks": 1}},
             {"status": "ok", "data": {"received_chunks": 2}},
             # 完成响应
@@ -123,9 +123,9 @@ class TestUploadFile:
         assert result.file_path == "/server/uploaded.txt"
     
     @pytest.mark.asyncio
-    async def test_upload_chunk_failure(self, upload_client, mock_ws_service, temp_file):
+    async def test_upload_chunk_failure(self, upload_client, mock_message_router, temp_file):
         """测试分片上传失败"""
-        mock_ws_service.send.return_value = {
+        mock_message_router.send.return_value = {
             "status": "failed",
             "message": "Chunk upload failed"
         }
@@ -136,9 +136,9 @@ class TestUploadFile:
         assert result.error
     
     @pytest.mark.asyncio
-    async def test_upload_bytes_success(self, upload_client, mock_ws_service):
+    async def test_upload_bytes_success(self, upload_client, mock_message_router):
         """测试成功上传字节数据"""
-        mock_ws_service.send.side_effect = [
+        mock_message_router.send.side_effect = [
             {"status": "ok", "data": {"received_chunks": 1}},
             {
                 "status": "ok",
@@ -162,10 +162,10 @@ class TestUploadParameters:
     
     @pytest.mark.asyncio
     async def test_upload_sends_correct_params(
-        self, upload_client, mock_ws_service
+        self, upload_client, mock_message_router
     ):
         """测试上传发送正确的参数"""
-        mock_ws_service.send.side_effect = [
+        mock_message_router.send.side_effect = [
             {"status": "ok", "data": {}},
             {
                 "status": "ok",
@@ -176,7 +176,7 @@ class TestUploadParameters:
         await upload_client.upload_bytes(b"Test", "test.txt")
         
         # 检查第一次调用（分片上传）
-        first_call = mock_ws_service.send.call_args_list[0]
+        first_call = mock_message_router.send.call_args_list[0]
         assert first_call[0][0] == "upload_file_stream"
         params = first_call[0][1]
         
@@ -188,9 +188,9 @@ class TestUploadParameters:
         assert "file_retention" in params
     
     @pytest.mark.asyncio
-    async def test_upload_complete_signal(self, upload_client, mock_ws_service):
+    async def test_upload_complete_signal(self, upload_client, mock_message_router):
         """测试发送完成信号"""
-        mock_ws_service.send.side_effect = [
+        mock_message_router.send.side_effect = [
             {"status": "ok", "data": {}},
             {
                 "status": "ok",
@@ -201,7 +201,7 @@ class TestUploadParameters:
         await upload_client.upload_bytes(b"Test", "test.txt")
         
         # 检查最后一次调用（完成信号）
-        last_call = mock_ws_service.send.call_args_list[-1]
+        last_call = mock_message_router.send.call_args_list[-1]
         params = last_call[0][1]
         
         assert params.get("is_complete") is True

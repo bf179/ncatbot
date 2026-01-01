@@ -5,10 +5,8 @@ from .plugins.filters_custom_plugin import (
     CustomFiltersPlugin,
     bind_custom_filter_to_function,
 )
-from ncatbot.plugin_system.builtin_plugin.unified_registry.filter_system import (
-    filter_registry,
-)
-from ncatbot.core.event import BaseMessageEvent
+from ncatbot.plugin_system import filter_registry
+from ncatbot.core import MessageEvent
 
 
 async def run_custom_filters_tests():
@@ -26,7 +24,7 @@ async def run_custom_filters_tests():
 
     # keyword_filter + 自定义绑定到函数（非命令）
     @bind_custom_filter_to_function
-    async def time_check_command(event: BaseMessageEvent):
+    async def time_check_command(event: MessageEvent):
         await event.reply("关键字命中")
 
     # 注册到过滤器函数集合中

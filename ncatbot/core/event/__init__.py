@@ -11,32 +11,15 @@ from .enums import *  # noqa: F401,F403 - 枚举类型
 from .events import *  # noqa: F401,F403 - 事件类
 
 # 兼容别名 (Pylance: re-export for type checking)
-from .message_segments import Text as PlainText  # noqa: F401
-from .events import MessageEvent as BaseMessageEvent  # noqa: F401
 from .events import MessageEvent as MessageSentEvent  # noqa: F401
-from .events import BaseEvent as BaseEventData  # noqa: F401
 
 __all__ = [
     # 解析器
-    "EventParser",
-    # 消息段 (from message_segments)
-    "MessageSegment", "MessageArray", "Text", "PlainText", "At", "AtAll",
-    "Face", "Reply", "Image", "Record", "Video", "File", "Node", "Forward",
-    "Share", "Location", "Music", "Json", "Markdown",
-    # 模型 (from models)
-    "GroupSender", "BaseSender", "Anonymous", "FileInfo", "Status",
-    # 枚举 (from enums)
-    "PostType", "MessageType", "NoticeType", "RequestType",
-    "MetaEventType", "NotifySubType", "EventType",
-    # 事件类 (from events)
-    "BaseEvent", "BaseEventData", "MessageEvent", "BaseMessageEvent", "MessageSentEvent",
-    "PrivateMessageEvent", "GroupMessageEvent",
-    "NoticeEvent", "GroupUploadNoticeEvent", "GroupAdminNoticeEvent",
-    "GroupDecreaseNoticeEvent", "GroupIncreaseNoticeEvent", "GroupBanNoticeEvent",
-    "FriendAddNoticeEvent", "GroupRecallNoticeEvent", "FriendRecallNoticeEvent",
-    "NotifyEvent", "PokeNotifyEvent", "LuckyKingNotifyEvent", "HonorNotifyEvent",
-    "RequestEvent", "FriendRequestEvent", "GroupRequestEvent",
-    "MetaEvent", "LifecycleMetaEvent", "HeartbeatMetaEvent",
+    "EventParser", "MessageSentEvent",
 ]
 
+__all__.extend(getattr(message_segments, "__all__", []))  # type: ignore
+__all__.extend(getattr(models, "__all__", []))  # type: ignore
+__all__.extend(getattr(enums, "__all__", []))  # type: ignore
+__all__.extend(getattr(events, "__all__", []))  # type: ignore
 

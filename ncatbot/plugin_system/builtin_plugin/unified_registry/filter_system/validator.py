@@ -5,7 +5,7 @@ from .base import BaseFilter
 from ncatbot.utils import get_log
 
 if TYPE_CHECKING:
-    from ncatbot.core.event import BaseMessageEvent
+    from ncatbot.core import MessageEvent
 
 LOG = get_log("Validator")
 
@@ -13,7 +13,7 @@ LOG = get_log("Validator")
 class FilterValidator:
     """过滤器验证器 v2.0"""
 
-    def validate_filters(self, func: Callable, event: "BaseMessageEvent") -> bool:
+    def validate_filters(self, func: Callable, event: "MessageEvent") -> bool:
         """验证函数的所有过滤器
 
         Args:

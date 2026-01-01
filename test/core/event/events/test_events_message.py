@@ -4,15 +4,15 @@
 import pytest
 from typing import Dict, Any
 
-from ncatbot.core.event.events import (
+from ncatbot.core import (
     BaseEvent,
     MessageEvent,
     PrivateMessageEvent,
     GroupMessageEvent,
     LifecycleMetaEvent,
 )
-from ncatbot.core.event.enums import PostType, MessageType, MetaEventType
-from ncatbot.core.event.models import BaseSender, GroupSender
+from ncatbot.core import PostType, MessageType, MetaEventType
+from ncatbot.core import BaseSender, GroupSender
 
 
 class TestBaseEvent:

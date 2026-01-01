@@ -4,8 +4,8 @@
 import pytest
 from typing import Dict, Any
 
-from ncatbot.core.event.parser import EventParser
-from ncatbot.core.event.events import (
+from ncatbot.core import EventParser
+from ncatbot.core import (
     PrivateMessageEvent,
     GroupMessageEvent,
 )

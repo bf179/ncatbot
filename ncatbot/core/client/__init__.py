@@ -11,7 +11,7 @@ from .registry import EventRegistry
 from .lifecycle import LifecycleManager, StartArgs, LEGAL_ARGS
 from .client import BotClient
 
-from ncatbot.core.event.enums import EventType
+from ..event.enums import EventType
 
 __all__ = [
     # 核心类

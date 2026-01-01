@@ -1,7 +1,7 @@
 import time
 import uuid
 from typing import Literal, Union, Optional
-from ncatbot.core.event import (
+from ncatbot.core import (
     GroupMessageEvent,
     PrivateMessageEvent,
     NoticeEvent,

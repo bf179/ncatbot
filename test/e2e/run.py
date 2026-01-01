@@ -139,7 +139,7 @@ async def setup_connection():
     # 启动消息监听（必须在发送请求前启动）
     router.start_listening()
     
-    # 加载预上传服务（自己维护独立的 WebSocket 连接）
+    # 加载预上传服务（使用 message_router 的连接）
     await services.load("preupload")
 
     # 创建 API（传入 service_manager 以支持预上传）

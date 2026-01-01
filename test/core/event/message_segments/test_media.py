@@ -4,14 +4,14 @@ media.py 模块测试 - 测试媒体消息类型 (Image, Record, Video, File)
 import pytest
 from typing import Dict, Any, List
 
-from ncatbot.core.event.message_segments.media import (
+from ncatbot.core import (
     DownloadableMessageSegment,
     Image,
     Record,
     Video,
     File,
 )
-from ncatbot.core.event.message_segments.base import parse_message_segment
+from ncatbot.core import parse_message_segment
 
 
 class TestDownloadableMessageSegment:

@@ -1,7 +1,7 @@
 """
 流式上传客户端
 
-提供基于 WebSocket 的文件流式上传功能。
+提供基于 WebSocket 的文件流式上传功能，使用 MessageRouter 发送请求。
 """
 
 import base64
@@ -18,7 +18,7 @@ from .constants import (
 )
 
 if TYPE_CHECKING:
-    from .upload_connection import UploadConnection
+    from ncatbot.core.service.builtin.message_router import MessageRouter
 
 LOG = get_log("StreamUploadClient")
 
@@ -55,22 +55,22 @@ class StreamUploadClient:
     流式上传客户端
     
     负责将本地文件通过 NapCat Stream API 上传到服务器。
-    使用 UploadConnection 发送请求。
+    使用 MessageRouter 发送请求。
     """
     
     def __init__(
         self, 
-        connection: "UploadConnection",
+        message_router: "MessageRouter",
         chunk_size: int = DEFAULT_CHUNK_SIZE,
         file_retention: int = DEFAULT_FILE_RETENTION,
     ):
         """
         Args:
-            connection: 预上传专用 WebSocket 连接
+            message_router: 消息路由服务（用于发送请求）
             chunk_size: 分片大小（字节）
             file_retention: 文件保留时间（毫秒）
         """
-        self._conn = connection
+        self._router = message_router
         self._chunk_size = chunk_size
         self._file_retention = file_retention
     
@@ -214,7 +214,7 @@ class StreamUploadClient:
                 "file_retention": self._file_retention,
             }
             
-            response = await self._conn.send("upload_file_stream", params)
+            response = await self._router.send("upload_file_stream", params)
             
             if response.get("status") != "ok":
                 error_msg = response.get("message", "Unknown error")
@@ -227,7 +227,7 @@ class StreamUploadClient:
             "is_complete": True,
         }
         
-        response = await self._conn.send("upload_file_stream", complete_params)
+        response = await self._router.send("upload_file_stream", complete_params)
         
         if response.get("status") != "ok":
             error_msg = response.get("message", "Unknown error")

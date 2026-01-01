@@ -12,7 +12,7 @@ from ..utils import APIComponent, APIReturnStatus, get_log
 
 if TYPE_CHECKING:
     from ..client import IAPIClient
-    from ncatbot.core.event import File
+    from ncatbot.core import File
 
 LOG = get_log("GroupFileMixin")
 
@@ -99,7 +99,7 @@ class GroupFileMixin(APIComponent):
         Returns:
             File: 文件对象
         """
-        from ncatbot.core.event import File as FileClass
+        from ncatbot.core import File as FileClass
 
         result = await self._request_raw(
             "/get_file",

@@ -5,7 +5,7 @@ CalculatorPlugin - 用于演示 unittest 测试的计算器插件
 
 from ncatbot.plugin_system import NcatBotPlugin
 from ncatbot.plugin_system import on_message
-from ncatbot.core.event import BaseMessageEvent, MessageArray
+from ncatbot.core import MessageEvent, MessageArray
 
 
 class CalculatorPlugin(NcatBotPlugin):
@@ -19,7 +19,7 @@ class CalculatorPlugin(NcatBotPlugin):
         self.calculation_count = 0
 
     @on_message
-    async def handle_message(self, event: BaseMessageEvent):
+    async def handle_message(self, event: MessageEvent):
         """处理消息事件"""
         message_text = self.extract_text(event.message)
 
@@ -39,7 +39,7 @@ class CalculatorPlugin(NcatBotPlugin):
             await event.reply(f"已进行 {self.calculation_count} 次计算")
             return
 
-    async def _handle_calculation(self, event: BaseMessageEvent, expression: str):
+    async def _handle_calculation(self, event: MessageEvent, expression: str):
         """处理数学计算"""
         try:
             # 简单的安全计算（仅支持基本运算符）

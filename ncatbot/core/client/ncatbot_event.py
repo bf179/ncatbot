@@ -124,3 +124,8 @@ class NcatBotEventFactory:
             NcatBotEvent: 创建的事件实例
         """
         return NcatBotEvent(f"ncatbot.{event_name}", data=kwargs)
+
+__all__ = [
+    "NcatBotEvent",
+    "NcatBotEventFactory",
+]

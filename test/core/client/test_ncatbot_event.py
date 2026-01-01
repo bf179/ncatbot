@@ -4,7 +4,7 @@ NcatBotEvent 和 NcatBotEventFactory 测试
 import pytest
 from copy import copy
 
-from ncatbot.core.client.ncatbot_event import NcatBotEvent, NcatBotEventFactory
+from ncatbot.core import NcatBotEvent, NcatBotEventFactory
 
 
 class TestNcatBotEventInitialization:

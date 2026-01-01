@@ -5,8 +5,11 @@
 """
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Optional, TYPE_CHECKING
 from ncatbot.utils import get_log
+
+if TYPE_CHECKING:
+    from .manager import ServiceManager
 
 LOG = get_log("Service")
 
@@ -25,6 +28,7 @@ class BaseService(ABC):
     属性：
         name (str): 服务名称（必须定义）
         description (str): 服务描述
+        service_manager (ServiceManager): 服务管理器（可选，用于访问其他服务）
     """
     
     # 服务元数据（子类必须定义 name）
@@ -43,6 +47,7 @@ class BaseService(ABC):
             
         self.config = config
         self._loaded = False
+        self.service_manager: Optional["ServiceManager"] = None
     
     # ------------------------------------------------------------------
     # 生命周期钩子（子类应重写）

@@ -5,7 +5,7 @@ import pytest
 import json
 from enum import Enum
 
-from ncatbot.core.event.enums import (
+from ncatbot.core import (
     PostType,
     MessageType,
     NoticeType,

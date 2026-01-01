@@ -5,8 +5,8 @@ import pytest
 from unittest.mock import MagicMock
 
 from ncatbot.core.client.registry import EventRegistry
-from ncatbot.core.client.ncatbot_event import NcatBotEvent
-from ncatbot.core.event.enums import EventType
+from ncatbot.core import NcatBotEvent
+from ncatbot.core import EventType
 
 
 class TestEventRegistryInit:

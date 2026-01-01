@@ -13,7 +13,7 @@ from ncatbot.utils import NcatBotValueError
 
 if TYPE_CHECKING:
     from ..client import IAPIClient
-    from ncatbot.core.event import GroupMessageEvent, Forward
+    from ncatbot.core import GroupMessageEvent, Forward
 
 
 # =============================================================================

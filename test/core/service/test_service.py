@@ -141,6 +141,8 @@ class TestServiceManager:
         
         assert service.is_loaded
         assert "dummy" in manager.list_services()
+        # 验证 ServiceManager 被注入
+        assert service.service_manager is manager
     
     @pytest.mark.asyncio
     async def test_load_nonexistent_service(self):

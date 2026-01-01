@@ -5,7 +5,7 @@ import pytest
 from typing import Dict, Any
 
 from ncatbot.core.event.parser import EventParser, register_builtin_events
-from ncatbot.core.event.events import (
+from ncatbot.core import (
     PrivateMessageEvent,
     GroupMessageEvent,
     LifecycleMetaEvent,
@@ -15,7 +15,7 @@ from ncatbot.core.event.events import (
     PokeNotifyEvent,
     GroupRecallNoticeEvent,
 )
-from ncatbot.core.event.enums import PostType, MessageType, NoticeType, MetaEventType, RequestType, NotifySubType
+from ncatbot.core import PostType, MessageType, NoticeType, MetaEventType, RequestType, NotifySubType
 
 
 class TestEventParserRegistry:

@@ -4,7 +4,7 @@ EventRegistry 装饰器和集成测试
 import pytest
 from unittest.mock import MagicMock
 
-from ncatbot.core.client.ncatbot_event import NcatBotEvent
+from ncatbot.core import NcatBotEvent
 
 
 class TestEventRegistryDecorators:
@@ -136,7 +136,7 @@ class TestEventRegistryIntegration:
     @pytest.mark.asyncio
     async def test_decorator_with_filter(self, event_registry):
         """装饰器带过滤器"""
-        from ncatbot.core.event import MessageSegment
+        from ncatbot.core import MessageSegment
         
         results = []
         

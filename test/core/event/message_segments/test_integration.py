@@ -4,15 +4,15 @@
 import pytest
 from typing import Dict, Any, List
 
-from ncatbot.core.event.message_segments.base import (
+from ncatbot.core import (
     MessageArrayDTO,
     parse_message_segment,
     MessageSegment,
     TYPE_MAP,
 )
-from ncatbot.core.event.message_segments.primitives import PlainText, Face, At, Reply
-from ncatbot.core.event.message_segments.media import Image
-from ncatbot.core.event.message_segments.forward import Forward
+from ncatbot.core import PlainText, Face, At, Reply
+from ncatbot.core import Image
+from ncatbot.core import Forward
 
 
 class TestCompleteMessageParsing:
@@ -107,8 +107,12 @@ class TestMessageSerialization:
         
         result = dto.to_list()
         
-        assert "message" in result
-        assert len(result["message"]) == 2
+        assert isinstance(result, list)
+        assert len(result) == 2
+        assert result[0]["type"] == "text"
+        assert result[0]["data"]["text"] == "Hello"
+        assert result[1]["type"] == "text"
+        assert result[1]["data"]["text"] == " World"
     
     def test_serialize_mixed_message(self):
         """测试序列化混合消息"""
@@ -120,7 +124,12 @@ class TestMessageSerialization:
         
         result = dto.to_list()
         
-        assert len(result["message"]) == 3
+        assert isinstance(result, list)
+        assert len(result) == 3
+        assert result[0]["type"] == "text"
+        assert result[1]["type"] == "at"
+        assert result[1]["data"]["qq"] == "12345678"
+        assert result[2]["type"] == "text"
 
 
 class TestRealDataIntegration:

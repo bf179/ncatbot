@@ -167,3 +167,6 @@ class Color:
 
         color_code = rgb_to_256(r, g, b)
         return cls.color256(color_code, background)
+
+
+__all__ = ["Color"]

@@ -1,6 +1,6 @@
 import time
 from ncatbot.plugin_system import NcatBotPlugin, command_registry
-from ncatbot.core.event import BaseMessageEvent
+from ncatbot.core import MessageEvent
 
 # 记录 Bot 启动时间
 start_time = time.time()
@@ -17,7 +17,7 @@ class StatusPlugin(NcatBotPlugin):
         pass
 
     @command_registry.command("status", description="显示 Bot 运行状态")
-    async def status_cmd(self, event: BaseMessageEvent):
+    async def status_cmd(self, event: MessageEvent):
         """处理 /status 命令"""
         running_time = time.time() - start_time
         days = int(running_time // (24 * 3600))

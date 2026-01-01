@@ -4,7 +4,7 @@ EventRegistry 消息/通知/请求/元事件处理器测试
 import pytest
 from unittest.mock import MagicMock
 
-from ncatbot.core.client.ncatbot_event import NcatBotEvent
+from ncatbot.core import NcatBotEvent
 
 
 class TestEventRegistryMessageHandlers:
@@ -73,7 +73,7 @@ class TestEventRegistryMessageHandlers:
     @pytest.mark.asyncio
     async def test_add_group_message_with_segment_filter(self, event_registry):
         """带 MessageSegment 过滤的群消息"""
-        from ncatbot.core.event import MessageSegment
+        from ncatbot.core import MessageSegment
         
         received = []
         

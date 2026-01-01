@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from ncatbot.core.event import BaseEventData
+from ncatbot.core import BaseEvent
 from ncatbot.utils import get_log
 
 LOG = get_log("ClientMixin")
@@ -11,7 +11,7 @@ class ClientMixin:
     def __init__(self, *args, **kwargs):
         # 测试模式默认不加载插件，需要手动加载要测试的插件
         self.mock_mode = True
-        self.event_history: List[Tuple[str, BaseEventData]] = []
+        self.event_history: List[Tuple[str, BaseEvent]] = []
 
     def enable_mock_mode(self):
         """启用 Mock 模式"""
@@ -26,7 +26,7 @@ class ClientMixin:
     def mock_start(self):
         LOG.info("Mock 模式启动：跳过 NapCat 服务和 WebSocket 连接")
         # 在 mock 模式下触发启动事件
-        from ncatbot.core.event.meta_event import MetaEvent
+        from ncatbot.core.meta_event import MetaEvent
 
         startup_event = MetaEvent(
             {
@@ -49,7 +49,7 @@ class ClientMixin:
                 handler(startup_event)
         return
 
-    async def inject_event(self, event: BaseEventData):
+    async def inject_event(self, event: BaseEvent):
         """注入事件到客户端，模拟从适配器接收事件
 
         Args:

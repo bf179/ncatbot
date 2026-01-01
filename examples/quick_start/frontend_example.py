@@ -1,4 +1,4 @@
-from ncatbot.core import BotClient, BaseMessageEvent
+from ncatbot.core import BotClient, MessageEvent
 from ncatbot.utils import config
 from ncatbot.plugin_system import on_message
 
@@ -10,7 +10,7 @@ bot = BotClient()
 
 
 @on_message
-async def on_private_message(event: BaseMessageEvent):
+async def on_private_message(event: MessageEvent):
     msg = event.message
     if event.is_group_msg():
         if msg.filter_text()[0].text == "测试":

@@ -11,12 +11,12 @@ import inspect
 from dataclasses import dataclass
 from typing import Tuple, List, Any, Dict
 
-from ncatbot.plugin_system.builtin_plugin.unified_registry.command_system.utils.specs import (
+from ..command_system.utils import (
     CommandSpec,
 )
 from ncatbot.utils import get_log
 from ..command_system.lexer.message_tokenizer import MessageTokenizer
-from ncatbot.core.event import BaseMessageEvent
+from ncatbot.core import MessageEvent
 
 LOG = get_log(__name__)
 
@@ -45,7 +45,7 @@ class ArgumentBinder:
     def bind(
         self,
         spec: CommandSpec,
-        event: BaseMessageEvent,
+        event: MessageEvent,
         path_words: Tuple[str, ...],
         prefixes: List[str],
     ) -> BindResult:

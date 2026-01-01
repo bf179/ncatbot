@@ -1,5 +1,5 @@
 from typing import final, Any
-from ncatbot.plugin_system.base_plugin import BasePlugin
+from ncatbot.plugin_system import BasePlugin
 from .time_task_mixin import TimeTaskMixin
 from ncatbot.utils import get_log
 

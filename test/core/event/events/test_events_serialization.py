@@ -4,7 +4,7 @@
 import pytest
 from typing import Dict, Any
 
-from ncatbot.core.event.events import (
+from ncatbot.core import (
     PrivateMessageEvent,
     GroupMessageEvent,
     HeartbeatMetaEvent,

@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Type, Union
 from ncatbot.utils import ncatbot_config, get_log, status
 
 from ..base_plugin import BasePlugin
-from ..event import EventBus
+from ncatbot.core import EventBus
 from ..pluginsys_err import (
     PluginDependencyError,
     PluginVersionError,

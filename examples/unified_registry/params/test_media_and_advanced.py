@@ -1,6 +1,6 @@
 import asyncio
 from ncatbot.utils.testing import TestClient, TestHelper
-from ncatbot.core.event import MessageArray, Text, At, Image
+from ncatbot.core import MessageArray, Text, At, Image
 
 from .plugins.params_media_plugin import ParamsMediaPlugin
 from .plugins.params_options_plugin import ParamsOptionsPlugin

@@ -233,7 +233,7 @@ class GroupMessageTests(APITestSuite):
     )
     async def test_post_group_array_msg(api, data):
         """发送群数组消息"""
-        from ncatbot.core.event import MessageArray
+        from ncatbot.core import MessageArray
         
         target_group = data.get("target_group")
         if not target_group:

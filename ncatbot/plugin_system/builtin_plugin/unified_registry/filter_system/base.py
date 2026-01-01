@@ -4,7 +4,9 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
-    from ncatbot.core.event import BaseMessageEvent
+    from ncatbot.core import MessageEvent
+
+__all__ = ["BaseFilter", "CombinedFilter"]
 
 
 class BaseFilter(ABC):
@@ -17,7 +19,7 @@ class BaseFilter(ABC):
         self.name = name or self.__class__.__name__
 
     @abstractmethod
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         """检查事件是否通过过滤器
 
         Args:
@@ -67,7 +69,7 @@ class CombinedFilter(BaseFilter):
             raise ValueError("mode must be 'or' or 'and'")
         self.mode = mode
 
-    def check(self, event: "BaseMessageEvent") -> bool:
+    def check(self, event: "MessageEvent") -> bool:
         if self.mode == "or":
             try:
                 return self.left.check(event) or self.right.check(event)

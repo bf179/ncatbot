@@ -11,11 +11,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Union, Tuple
 
-from ncatbot.plugin_system.builtin_plugin.unified_registry.command_system.utils.specs import (
+from ..command_system.utils import (
     CommandSpec,
 )
 from ncatbot.utils import get_log
-from ..command_system.lexer.tokenizer import Token, TokenType
+from ..command_system.lexer import Token, TokenType
 
 LOG = get_log(__name__)
 

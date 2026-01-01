@@ -4,7 +4,7 @@
 import pytest
 from typing import Dict, Any
 
-from ncatbot.core.event.events import (
+from ncatbot.core import (
     RequestEvent,
     FriendRequestEvent,
     GroupRequestEvent,
@@ -12,8 +12,8 @@ from ncatbot.core.event.events import (
     LifecycleMetaEvent,
     HeartbeatMetaEvent,
 )
-from ncatbot.core.event.enums import PostType, RequestType, MetaEventType
-from ncatbot.core.event.models import Status
+from ncatbot.core import PostType, RequestType, MetaEventType
+from ncatbot.core import Status
 
 
 class TestFriendRequestEvent:

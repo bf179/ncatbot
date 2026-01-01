@@ -6,7 +6,7 @@ import asyncio
 import pytest
 
 from ncatbot.core.client.event_bus import HandlerTimeoutError
-from ncatbot.core.client.ncatbot_event import NcatBotEvent
+from ncatbot.core import NcatBotEvent
 
 
 class TestEventBusPublish:

@@ -3,9 +3,9 @@ MessageArray 过滤和解析测试 - 测试 filter、concatenate_text、is_user_
 """
 import pytest
 
-from ncatbot.core.event.message_segments.message_array import MessageArray, Text, AtAll
-from ncatbot.core.event.message_segments.primitives import PlainText, At
-from ncatbot.core.event.message_segments.base import MessageSegment
+from ncatbot.core import MessageArray, Text, AtAll
+from ncatbot.core import PlainText, At
+from ncatbot.core import MessageSegment
 
 
 class TestMessageArrayFilter:
