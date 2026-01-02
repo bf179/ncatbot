@@ -1,7 +1,6 @@
 """UnifiedRegistry 端到端测试共享 fixtures"""
 
 import pytest
-import sys
 from pathlib import Path
 
 from ncatbot.utils.testing import E2ETestSuite
@@ -18,25 +17,9 @@ PARAMS_PLUGIN_DIR = PLUGINS_DIR / "params_test_plugin"
 GROUPS_PLUGIN_DIR = PLUGINS_DIR / "command_groups_plugin"
 
 
-def _cleanup_modules():
-    """清理插件模块缓存"""
-    modules_to_remove = [
-        name for name in list(sys.modules.keys())
-        if "ncatbot_plugin" in name
-        or "basic_command_plugin" in name
-        or "filter_test_plugin" in name
-        or "params_test_plugin" in name
-        or "command_groups_plugin" in name
-    ]
-    for name in modules_to_remove:
-        sys.modules.pop(name, None)
-
-
 @pytest.fixture
 def basic_command_suite():
     """创建基础命令测试套件"""
-    _cleanup_modules()
-    
     suite = E2ETestSuite()
     suite.setup()
     suite.index_plugin(str(BASIC_PLUGIN_DIR))
@@ -45,14 +28,11 @@ def basic_command_suite():
     yield suite
     
     suite.teardown()
-    _cleanup_modules()
 
 
 @pytest.fixture
 def filter_suite():
     """创建过滤器测试套件"""
-    _cleanup_modules()
-    
     suite = E2ETestSuite()
     suite.setup()
     suite.index_plugin(str(FILTER_PLUGIN_DIR))
@@ -61,14 +41,11 @@ def filter_suite():
     yield suite
     
     suite.teardown()
-    _cleanup_modules()
 
 
 @pytest.fixture
 def params_suite():
     """创建参数测试套件"""
-    _cleanup_modules()
-    
     suite = E2ETestSuite()
     suite.setup()
     suite.index_plugin(str(PARAMS_PLUGIN_DIR))
@@ -77,14 +54,11 @@ def params_suite():
     yield suite
     
     suite.teardown()
-    _cleanup_modules()
 
 
 @pytest.fixture
 def groups_suite():
     """创建命令分组测试套件"""
-    _cleanup_modules()
-    
     suite = E2ETestSuite()
     suite.setup()
     suite.index_plugin(str(GROUPS_PLUGIN_DIR))
@@ -93,7 +67,6 @@ def groups_suite():
     yield suite
     
     suite.teardown()
-    _cleanup_modules()
 
 
 @pytest.fixture

@@ -5,7 +5,6 @@
 import pytest
 import re
 import sys
-import time
 from pathlib import Path
 from typing import Dict, Optional, TYPE_CHECKING
 
@@ -62,22 +61,6 @@ def _reset_plugin_file():
         RELOAD_PLUGIN_MAIN.write_text(original)
 
 
-def _cleanup_modules():
-    """清理插件模块缓存"""
-    modules_to_remove = [
-        name for name in list(sys.modules.keys())
-        if "reload_test_plugin" in name or "ncatbot_plugin" in name
-    ]
-    for name in modules_to_remove:
-        sys.modules.pop(name, None)
-
-
-def _cleanup_command_registry():
-    """清理命令注册表中的测试插件命令"""
-    command_registry.root_group.revoke_plugin("reload_test_plugin")
-    command_registry.root_group.revoke_plugin("")  # 清理没有插件名的命令
-
-
 def get_plugin_class(plugin_name: str):
     """从已加载的模块中获取插件类"""
     for module_name, module in sys.modules.items():
@@ -109,8 +92,7 @@ _get_original_content()
 @pytest.fixture
 def test_suite():
     """创建测试套件（每个测试完全隔离）"""
-    # 重置状态
-    _cleanup_modules()
+    # 重置插件文件到原始状态
     _reset_plugin_file()
     
     suite = E2ETestSuite()
@@ -135,7 +117,6 @@ def test_suite():
     # teardown 前暂停，防止检测到文件重置
     file_watcher.pause()
     suite.teardown()
-    _cleanup_modules()
     _reset_plugin_file()
 
 
@@ -181,23 +162,17 @@ def check_handler_registered(suite: "E2ETestSuite", plugin_name: str) -> int:
 
 @pytest.fixture
 def reset_plugin_counters():
-    """重置插件计数器 fixture，同时清理命令注册表"""
-    # 测试前清理
-    _cleanup_command_registry()
-    _cleanup_modules()
+    """重置插件计数器和插件文件"""
+    # 测试前重置
     _reset_plugin_file()
-    
     plugin_class = get_plugin_class("reload_test_plugin")
     if plugin_class and hasattr(plugin_class, "reset_counters"):
         plugin_class.reset_counters()
     
     yield
     
-    # 测试后清理
-    _cleanup_command_registry()
-    _cleanup_modules()
+    # 测试后重置
     _reset_plugin_file()
-    
     plugin_class = get_plugin_class("reload_test_plugin")
     if plugin_class and hasattr(plugin_class, "reset_counters"):
         plugin_class.reset_counters()

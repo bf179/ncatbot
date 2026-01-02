@@ -38,9 +38,9 @@ def reset_plugin_counters(plugin_name: str):
         plugin_class.reset_counters()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def test_suite():
-    """创建测试套件并索引所有测试插件（模块级别，只创建一次）"""
+    """创建测试套件并索引所有测试插件"""
     suite = E2ETestSuite()
     suite.setup()
     
@@ -53,9 +53,9 @@ def test_suite():
     suite.teardown()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def test_suite_skip_builtin():
-    """创建跳过内置插件的测试套件（模块级别）"""
+    """创建跳过内置插件的测试套件"""
     suite = E2ETestSuite(skip_builtin_plugins=True)
     suite.setup()
     
@@ -66,46 +66,6 @@ def test_suite_skip_builtin():
     
     yield suite
     suite.teardown()
-
-
-@pytest.fixture(autouse=True)
-def cleanup_after_test(request):
-    """每个测试后清理状态：卸载插件、重置计数器、清空调用历史"""
-    plugin_names = [
-        "basic_test_plugin",
-        "command_test_plugin",
-        "config_test_plugin",
-        "handler_test_plugin",
-        "full_feature_plugin",
-    ]
-    
-    # 测试前重置计数器
-    for name in plugin_names:
-        reset_plugin_counters(name)
-    
-    yield
-    
-    # 测试后清理
-    # 获取 test_suite fixture（如果存在）
-    if "test_suite" in request.fixturenames:
-        suite = request.getfixturevalue("test_suite")
-        
-        # 卸载测试中加载的插件
-        for name in list(suite._registered_plugins):
-            try:
-                suite.unregister_plugin_sync(name)
-            except Exception:
-                pass
-        
-        # 清空 API 调用历史
-        try:
-            suite.clear_call_history()
-        except Exception:
-            pass
-    
-    # 重置计数器
-    for name in plugin_names:
-        reset_plugin_counters(name)
 
 
 # ==================== 插件名 fixtures ====================

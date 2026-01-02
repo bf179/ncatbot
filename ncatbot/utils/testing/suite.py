@@ -117,13 +117,7 @@ class E2ETestSuite:
     def teardown(self) -> None:
         """清理测试环境"""
         if self._client:
-            # 卸载测试中注册的插件
-            for plugin_name in self._registered_plugins:
-                try:
-                    run_coroutine(self._client.plugin_loader.unload_plugin, plugin_name)
-                except Exception as e:
-                    LOG.warning(f"卸载插件 {plugin_name} 失败: {e}")
-            
+            # bot_exit 会先卸载所有插件，再关闭服务
             self._client.bot_exit()
             self._client = None
             self._registered_plugins.clear()

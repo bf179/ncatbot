@@ -252,18 +252,17 @@ class LifecycleManager:
             return
         status.exit = True
         
-        # 关闭所有服务
-        run_coroutine(self.services.close_all)
-        
+        # 先卸载所有插件（此时服务仍可用）
         if self.plugin_loader:
-            # 检查是否在事件循环中
             try:
                 loop = asyncio.get_running_loop()
-                # 在运行中的事件循环内，使用 run_coroutine
                 run_coroutine(self.plugin_loader.unload_all)
             except RuntimeError:
-                # 没有运行中的事件循环，使用 asyncio.run
                 asyncio.run(self.plugin_loader.unload_all())
+        
+        # 后关闭所有服务
+        run_coroutine(self.services.close_all)
+        
         LOG.info("Bot 已退出")
 
     def run_frontend(self, **kwargs: Unpack[StartArgs]):
