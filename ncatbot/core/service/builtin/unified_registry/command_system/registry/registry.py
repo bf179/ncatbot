@@ -20,7 +20,8 @@ class CommandGroup:
 
     支持嵌套的命令组织结构。
     """
-
+    _current_plugin_name: str = ""
+    
     def __init__(
         self,
         name: str,
@@ -37,6 +38,10 @@ class CommandGroup:
 
         # 可继承的配置
         self.prefixes: List[str] = prefixes
+
+    @classmethod
+    def set_current_plugin_name(cls, plugin_name: str):
+        cls._current_plugin_name = plugin_name
 
     def command(
         self,
@@ -55,6 +60,7 @@ class CommandGroup:
             command_spec.description = description if description else ""
             command_spec.name = name
             command_spec.prefixes = prefixes if prefixes else self.prefixes
+            command_spec.plugin_name = self._current_plugin_name
             func.__is_command__ = True
             # 注册命令
             self._register_command(command_spec)
@@ -168,7 +174,11 @@ class ModernRegistry:
         self.command_registries.append(self)
         LOG.debug("现代化命令注册器初始化完成")
 
-    def command(self, name: str, aliases: list = None, description: str = "", **kwargs):
+    @classmethod
+    def set_current_plugin_name(cls, plugin_name: str):
+        cls.root_group.set_current_plugin_name(plugin_name)
+
+    def command(self, name: str, aliases: Optional[List[str]] = None, description: Optional[str] = None, **kwargs):
         """注册根级命令"""
         if "prefixes" not in kwargs:
             kwargs["prefixes"] = self.prefixes

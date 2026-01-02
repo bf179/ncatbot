@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from .base import BaseFilter
 from .builtin import CustomFilter
 from ncatbot.utils import get_log
-from ..utils import get_func_plugin_name
 
 LOG = get_log(__name__)
 
@@ -24,9 +23,9 @@ class FilterRegistry:
     可以用字符串索引 filter 实例
     支持两种注册方式：
     1. filter_registry.register_filter(name, filter_instance)
-    2. filter_registry.register(func) 或 @filter_registry 装饰器
     """
-
+    _current_plugin_name: str = ""
+    
     def __init__(self):
         self._filters: Dict[str, FilterEntry] = {}
         self._function_filters: Dict[str, Callable] = {}
@@ -41,11 +40,10 @@ class FilterRegistry:
         self.private_only = private_filter
         self.group_only = group_filter
 
-    def _validate_filter_function(self, func: Callable) -> None:
-        # TODO: 验证（自定义）过滤器函数
-        pass
+    @classmethod
+    def set_current_plugin_name(cls, plugin_name: str):
+        cls._current_plugin_name = plugin_name
 
-    # 方式1：实例注册
     def register_filter(
         self,
         name: str,
@@ -67,40 +65,6 @@ class FilterRegistry:
         )
         LOG.debug(f"注册过滤器实例: {name} -> {filter_instance}")
 
-    # 方式2：函数注册
-    def register(self, func_or_name=None, name: str = None):
-        """注册过滤器函数或用作装饰器
-
-        Args:
-            func_or_name: 过滤器函数或过滤器名称
-            name: 过滤器名称（当第一个参数是函数时使用）
-
-        Returns:
-            装饰器或注册的函数
-        """
-
-        def _register(f: Callable) -> Callable:
-            # 确定过滤器名称
-            if isinstance(func_or_name, str):
-                filter_name = func_or_name  # 装饰器模式：@register("name")
-            else:
-                filter_name = name or f.__name__  # 直接调用模式或无名称装饰器
-
-            custom_filter = CustomFilter(f, filter_name)
-            self.register_filter(filter_name, custom_filter)
-
-            return f
-
-        if func_or_name is None or isinstance(func_or_name, str):
-            # 用作装饰器: @filter_registry.register() 或 @filter_registry.register("name")
-            return _register
-        else:
-            # 直接调用: filter_registry.register(func)
-            return _register(func_or_name)
-
-    def __call__(self, func: Callable = None, name: str = None):
-        """使注册器实例可调用，等同于 register 方法"""
-        return self.register(func, name)
 
     # 为函数添加过滤器
     def add_filter_to_function(
@@ -117,7 +81,7 @@ class FilterRegistry:
         """
         if not hasattr(func, "__filters__"):
             setattr(func, "__filters__", [])
-            function_name = f"{get_func_plugin_name(func)}::{func.__name__}"
+            function_name = f"{self._current_plugin_name}::{func.__name__}"
             self._function_filters[function_name] = func
 
         filter_list: List[BaseFilter] = getattr(func, "__filters__")

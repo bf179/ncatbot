@@ -5,7 +5,6 @@ from ncatbot.utils import get_log
 from .sig_validator import SigValidator
 from .param_validator import ParamsValidator
 from ..utils import CommandSpec, FuncSpec
-from ...utils import get_func_plugin_name
 
 LOG = get_log(__name__)
 
@@ -45,5 +44,4 @@ class FuncAnalyser:
             self.func_descriptor, self.actual_params
         )
         spec = self.params_validator.analyze_params()
-        spec.plugin_name = get_func_plugin_name(self.func_descriptor.func)
         return spec
