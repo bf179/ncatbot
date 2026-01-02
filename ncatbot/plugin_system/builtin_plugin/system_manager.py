@@ -1,154 +1,50 @@
-from ..builtin_mixin import NcatBotPlugin
-from ncatbot.core.service.builtin.unified_registry import command_registry, filter_registry, root_filter, option_group
-from ncatbot.core import MessageEvent, NcatBotEvent, GroupMessageEvent, PrivateMessageEvent
-import psutil
-import ncatbot
-from ncatbot.utils import get_log, PermissionGroup, config
-import threading
-import time
+"""
+系统管理插件
+
+提供 NcatBot 核心功能：
+- 消息事件路由
+- 命令/过滤器分发
+- 插件热重载（通过 FileWatcherService）
+- 系统状态查询
+- 权限管理
+"""
+
 import asyncio
-import os
-from pathlib import Path
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
+import psutil
+
+import ncatbot
+from ncatbot.core import MessageEvent, NcatBotEvent, GroupMessageEvent, PrivateMessageEvent
+from ncatbot.core.service.builtin.unified_registry import (
+    command_registry, filter_registry, root_filter, option_group
+)
+from ncatbot.utils import get_log, PermissionGroup
+
+from ..builtin_mixin import NcatBotPlugin
+
+if TYPE_CHECKING:
+    from ncatbot.core.service.builtin import FileWatcherService
 
 LOG = get_log("SystemManager")
 
 
 class SystemManager(NcatBotPlugin):
-    version = "4.0.0"
-    name = "SystemManager"
+    """系统管理插件"""
+    
+    version = "4.1.0"
+    name = "system_manager"
     author = "huan-yp"
     description = "ncatbot 系统管理插件"
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._file_watcher_thread = None
-        self._watch_stop_event = threading.Event()
-        self._file_cache = {}  # 用于缓存文件的修改时间
-        self._pending_plugin_dirs = set()  # 待处理的一级插件子目录
-        self._last_process_time = 0  # 上次处理时间，用于去重
-
-    def _file_change_callback(self, file_path: str) -> None:
-        """文件变化的回调函数"""
-        LOG.info(f"检测到文件变化: {file_path}")
-
-        # 如果 debug 模式开启，处理插件目录并发送卸载/加载请求
-        if getattr(config, "debug", False):
-            plugins_dir = config.plugin.plugins_dir
-            try:
-                # 获取相对路径
-                rel_path = os.path.relpath(file_path, plugins_dir)
-                # 获取一级子目录
-                parts = rel_path.split(os.sep)
-                if len(parts) > 1:
-                    first_level_dir = parts[0]
-                    self._pending_plugin_dirs.add(first_level_dir)
-                    LOG.debug(f"添加待处理插件目录: {first_level_dir}")
-            except Exception as e:
-                LOG.warning(f"处理文件路径时出错 {file_path}: {e}")
-
-    def _watch_plugin_files(self) -> None:
-        """守护线程：监视插件目录中的 .py 文件变化"""
-        plugins_dir = config.plugin.plugins_dir
-
-        if not os.path.exists(plugins_dir):
-            LOG.warning(f"插件目录不存在: {plugins_dir}")
-            return
-
-        LOG.info(f"启动文件监视线程，监视目录: {plugins_dir}")
-
-        while not self._watch_stop_event.is_set():
-            try:
-                # 遍历所有 .py 文件
-                for py_file in Path(plugins_dir).rglob("*.py"):
-                    file_path = str(py_file)
-
-                    # 排除 site-packages 中的文件
-                    if "site-packages" in file_path:
-                        continue
-
-                    try:
-                        mod_time = os.path.getmtime(file_path)
-
-                        # 如果文件不在缓存中，或修改时间改变了
-                        if (
-                            file_path not in self._file_cache
-                            or self._file_cache[file_path] != mod_time
-                        ):
-                            self._file_cache[file_path] = mod_time
-                            # 触发回调函数
-                            self._file_change_callback(file_path)
-                    except OSError as e:
-                        LOG.warning(f"无法获取文件信息 {file_path}: {e}")
-
-                # 检查是否有删除的文件（排除 site-packages）
-                deleted_files = [
-                    f
-                    for f in self._file_cache.keys()
-                    if not os.path.exists(f) or "site-packages" in f
-                ]
-                for deleted_file in deleted_files:
-                    del self._file_cache[deleted_file]
-                    if os.path.exists(deleted_file):
-                        continue
-                    LOG.info(f"检测到文件删除: {deleted_file}")
-                    self._file_change_callback(deleted_file)
-
-                # 处理待处理的插件目录
-                current_time = time.time()
-                if (
-                    self._pending_plugin_dirs
-                    and (current_time - self._last_process_time) >= 1
-                ):
-                    # 至少间隔 1 秒处理一次，避免频繁重复加载
-                    # 100% 有线程安全问题，但是我不管了
-                    asyncio.run(self._process_pending_plugin_dirs())
-                    self._last_process_time = current_time
-
-                # 每秒检查一次
-                time.sleep(1)
-            except Exception as e:
-                LOG.error(f"文件监视线程出错: {e}")
-                time.sleep(1)
-
-    async def _process_pending_plugin_dirs(self) -> None:
-        """处理待处理的插件目录：发送卸载和加载请求"""
-        if not self._pending_plugin_dirs:
-            return
-
-        if not hasattr(self, "_first_process"):
-            self._pending_plugin_dirs.clear()
-            self._first_process = True
-            LOG.debug("初始化是跳过处理流程")
-            return  # 跳过第一次处理，避免启动时误触发
-
-        # 复制并清空待处理集合，避免重复处理
-        dirs_to_process = self._pending_plugin_dirs.copy()
-        self._pending_plugin_dirs.clear()
-
-        LOG.info(f"处理修改的插件目录: {dirs_to_process}")
-
-        for plugin_dir in dirs_to_process:
-            plugin_name = self._loader.get_plugin_name_by_folder_name(plugin_dir)
-            if plugin_name is None:
-                LOG.warning(f"无法找到插件目录 {plugin_dir} 对应的插件名称")
-                continue
-            try:
-                # 直接调用 loader 卸载插件
-                await self._loader.unload_plugin(plugin_name)
-                LOG.info(f"已卸载插件: {plugin_name}")
-
-                # 稍微延迟后加载插件
-                await asyncio.sleep(0.2)
-
-                # 直接调用 loader 加载插件
-                await self._loader.load_plugin(plugin_name)
-                LOG.info(f"已加载插件: {plugin_name}")
-            except Exception as e:
-                LOG.error(f"处理插件 {plugin_name} 时出错: {e}")
+    # ------------------------------------------------------------------
+    # 生命周期
+    # ------------------------------------------------------------------
 
     async def on_load(self) -> None:
-        self.register_handler("ncatbot.message_event", self.handle_message_event)
+        """插件加载"""
+        # 消息事件兼容层
+        self.register_handler("ncatbot.message_event", self._handle_message_event)
         
         # 订阅消息事件以触发命令和过滤器处理
         self.event_bus.subscribe(
@@ -162,30 +58,85 @@ class SystemManager(NcatBotPlugin):
             timeout=900,
         )
 
-        # 启动文件监视守护线程
-        self._watch_stop_event.clear()
-        self._file_watcher_thread = threading.Thread(
-            target=self._watch_plugin_files, daemon=True, name="PluginFileWatcher"
-        )
-        self._file_watcher_thread.start()
-        LOG.info("文件监视守护线程已启动")
+        # 设置文件监视服务的回调
+        file_watcher: "FileWatcherService" = self.services.file_watcher
+        if file_watcher:
+            file_watcher.set_reload_callback(self._on_plugin_reload_requested)
+            LOG.info("已注册插件热重载回调")
 
-    async def handle_message_event(self, event: NcatBotEvent) -> None:
-        """处理消息事件
-        TODO: 兼容层, 未来删除
+    async def on_unload(self) -> None:
+        """插件卸载"""
+        # FileWatcherService 会在服务关闭时自动停止
+        pass
+
+    # ------------------------------------------------------------------
+    # 热重载回调
+    # ------------------------------------------------------------------
+
+    async def _on_plugin_reload_requested(self, plugin_folder: str) -> bool:
         """
+        插件热重载回调
+        
+        由 FileWatcherService 在检测到文件变化时调用。
+        
+        Args:
+            plugin_folder: 发生变化的插件文件夹名
+            
+        Returns:
+            是否成功处理
+        """
+        plugin_name = self._loader.get_plugin_name_by_folder_name(plugin_folder)
+        if plugin_name is None:
+            LOG.warning(f"无法找到插件目录 {plugin_folder} 对应的插件名称")
+            return False
+        
+        try:
+            # 卸载插件
+            await self._loader.unload_plugin(plugin_name)
+            LOG.info(f"已卸载插件: {plugin_name}")
+            
+            # 短暂延迟后重新加载
+            await asyncio.sleep(0.05)
+            
+            # 加载插件
+            await self._loader.load_plugin(plugin_name)
+            LOG.info(f"已加载插件: {plugin_name}")
+            return True
+        except Exception as e:
+            LOG.error(f"热重载插件 {plugin_name} 失败: {e}")
+            return False
+
+    # ------------------------------------------------------------------
+    # 消息事件处理
+    # ------------------------------------------------------------------
+
+    async def _handle_message_event(self, event: NcatBotEvent) -> None:
+        """处理消息事件（兼容层，未来删除）"""
         message_event = event.data
         if isinstance(message_event, PrivateMessageEvent):
             await self.publish("ncatbot.private_message_event", message_event)
         elif isinstance(message_event, GroupMessageEvent):
             await self.publish("ncatbot.group_message_event", message_event)
 
+    async def _handle_unified_registry_message(self, event: NcatBotEvent) -> None:
+        """处理消息事件（命令和过滤器）"""
+        await self.services.unified_registry.handle_message_event(event.data)
+
+    async def _handle_unified_registry_legacy(self, event: NcatBotEvent) -> bool:
+        """处理通知和请求事件"""
+        return await self.services.unified_registry.handle_legacy_event(event.data)
+
+    # ------------------------------------------------------------------
+    # 系统命令
+    # ------------------------------------------------------------------
+
     @command_registry.command("ncatbot_status", aliases=["ncs"])
     @root_filter
     async def get_status(self, event: MessageEvent) -> None:
+        """查看 NcatBot 状态"""
         text = "ncatbot 状态:\n"
         text += f"插件数量: {len(self._loader.plugins)}\n"
-        text += f"插件列表: {', '.join([plugin.name for plugin in self._loader.plugins.values()])}\n"
+        text += f"插件列表: {', '.join([p.name for p in self._loader.plugins.values()])}\n"
         text += f"CPU 使用率: {psutil.cpu_percent()}%\n"
         text += f"内存使用率: {psutil.virtual_memory().percent}%\n"
         text += f"NcatBot 版本: {ncatbot.__version__}\n"
@@ -195,6 +146,7 @@ class SystemManager(NcatBotPlugin):
     @command_registry.command("ncatbot_help", aliases=["nch"])
     @root_filter
     async def get_help(self, event: MessageEvent) -> None:
+        """查看 NcatBot 帮助"""
         text = "ncatbot 帮助:\n"
         text += "/ncs 查看ncatbot状态\n"
         text += "/nch 查看ncatbot帮助\n"
@@ -209,6 +161,7 @@ class SystemManager(NcatBotPlugin):
     async def set_admin(
         self, event: MessageEvent, user_id: str, set: str = "add"
     ) -> None:
+        """设置/移除管理员"""
         if user_id.startswith("At"):
             user_id = user_id.split("=")[1].split('"')[1]
 
@@ -224,6 +177,7 @@ class SystemManager(NcatBotPlugin):
     async def set_config(
         self, event: MessageEvent, plugin_name: str, config_name: str, value: str
     ) -> None:
+        """设置插件配置"""
         plugin: Optional["NcatBotPlugin"] = self.get_plugin(plugin_name)
         if not plugin:
             await event.reply(f"未找到插件 {plugin_name}")
@@ -233,19 +187,3 @@ class SystemManager(NcatBotPlugin):
             await event.reply(f"插件 {plugin_name} 配置 {config_name} 更新为 {newvalue}")
         except Exception as e:
             await event.reply(f"插件 {plugin_name} 配置 {config_name} 更新失败: {e}")
-
-    async def _handle_unified_registry_message(self, event: NcatBotEvent) -> None:
-        """处理消息事件（命令和过滤器）"""
-        await self.services.unified_registry.handle_message_event(event.data)
-
-    async def _handle_unified_registry_legacy(self, event: NcatBotEvent) -> bool:
-        """处理通知和请求事件"""
-        return await self.services.unified_registry.handle_legacy_event(event.data)
-
-    async def on_unload(self) -> None:
-        """插件卸载时的清理工作"""
-        # 停止文件监视线程
-        if self._file_watcher_thread and self._file_watcher_thread.is_alive():
-            self._watch_stop_event.set()
-            self._file_watcher_thread.join(timeout=5)
-            LOG.info("文件监视守护线程已停止")
