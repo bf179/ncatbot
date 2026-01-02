@@ -179,30 +179,45 @@ class E2ETestSuite:
     
     # ==================== 插件管理 ====================
     
-    async def register_plugin(self, plugin_class: Type["BasePlugin"]) -> "BasePlugin":
+    def index_plugin(self, plugin_dir: str) -> str:
         """
-        注册插件
+        索引一个外部插件文件夹
+        
+        读取插件的元数据并写入索引，之后可以使用 register_plugin 加载。
         
         Args:
-            plugin_class: 插件类
+            plugin_dir: 插件文件夹的路径
+            
+        Returns:
+            插件名称
+        """
+        plugin_name = self.client.plugin_loader.index_external_plugin(plugin_dir)
+        if plugin_name:
+            LOG.info(f"已索引测试插件: {plugin_name} (路径: {plugin_dir})")
+        return plugin_name
+    
+    async def register_plugin(self, plugin_name: str) -> "BasePlugin":
+        """
+        注册插件（通过插件名加载已索引的插件）
+        
+        Args:
+            plugin_name: 插件名称
             
         Returns:
             插件实例
         """
-        plugin = await self.client.plugin_loader.load_plugin_by_class(
-            plugin_class, plugin_class.name
-        )
-        self._registered_plugins.append(plugin_class.name)
-        LOG.info(f"已注册测试插件: {plugin_class.name}")
+        plugin = await self.client.plugin_loader.load_plugin(plugin_name)
+        if plugin:
+            self._registered_plugins.append(plugin_name)
+            LOG.info(f"已注册测试插件: {plugin_name}")
         return plugin
     
-    def register_plugin_sync(self, plugin_class: Type["BasePlugin"]) -> "BasePlugin":
+    def register_plugin_sync(self, plugin_name: str) -> "BasePlugin":
         """同步版本的 register_plugin"""
-        return run_coroutine(self.register_plugin, plugin_class)
+        return run_coroutine(self.register_plugin, plugin_name)
     
     async def unregister_plugin(self, plugin_name: str) -> None:
         """卸载插件"""
-        # TODO: 这个卸不掉
         await self.client.plugin_loader.unload_plugin(plugin_name)
         if plugin_name in self._registered_plugins:
             self._registered_plugins.remove(plugin_name)

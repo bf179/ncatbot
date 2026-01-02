@@ -224,9 +224,6 @@ class _ModuleImporter:
         finally:
             sys.path = original_sys_path
 
-    def _get_plugin_dir(self, name: str) -> Path:
-        return Path(self.directory) / self._plugin_folders[name]
-
     def _get_plugin_pkg_name(self, name: str) -> str:
         # 使用 sanitized 名称生成包名，若未记录则退回到原始 name（兼容老数据）
         sanitized = self._sanitized_names.get(name, name)
@@ -254,6 +251,72 @@ class _ModuleImporter:
         注意：如果未调用 `inspect_all` 此方法可能返回 `None`。
         """
         return self._manifests.get(plugin_name)
+
+    def index_external_plugin(self, plugin_dir: Path) -> Optional[str]:
+        """索引一个外部插件文件夹，读取元数据并写入索引
+        
+        Args:
+            plugin_dir: 插件文件夹的绝对路径
+            
+        Returns:
+            插件名称，如果索引失败则返回 None
+        """
+        plugin_dir = Path(plugin_dir).resolve()
+        manifest_path = plugin_dir / "manifest.toml"
+        
+        if not plugin_dir.is_dir() or not manifest_path.exists():
+            LOG.warning("插件目录无效或缺少 manifest.toml: %s", plugin_dir)
+            return None
+            
+        try:
+            manifest = toml.load(manifest_path)
+            
+            # 基本校验
+            if (
+                not manifest.get("name")
+                or not manifest.get("version")
+                or not manifest.get("main")
+            ):
+                LOG.warning("插件 %s 的 manifest 缺少必填字段", plugin_dir)
+                return None
+                
+            plugin_name = manifest.get("name")
+            main_field = manifest.get("main")
+            
+            if not self._ensure_entry(plugin_dir, main_field):
+                return None
+                
+            if plugin_name in self._plugin_folders:
+                LOG.warning("插件 %s 已存在，跳过索引", plugin_name)
+                return None
+            
+            # 对于外部插件，使用绝对路径作为文件夹标识
+            self._plugin_folders[plugin_name] = str(plugin_dir)
+            self._manifests[plugin_name] = manifest
+            self._ensure_sanitized(plugin_name)
+            
+            LOG.info("已索引外部插件: %s (路径: %s)", plugin_name, plugin_dir)
+            return plugin_name
+            
+        except Exception:
+            LOG.exception("索引外部插件失败: %s", plugin_dir)
+            return None
+
+    def _get_plugin_dir(self, name: str) -> Path:
+        """获取插件目录路径
+        
+        支持两种情况：
+        1. 相对路径（标准插件）：基于 self.directory
+        2. 绝对路径（外部插件）：直接使用存储的路径
+        """
+        folder = self._plugin_folders[name]
+        folder_path = Path(folder)
+        
+        # 如果是绝对路径，直接返回
+        if folder_path.is_absolute():
+            return folder_path
+        # 否则是相对路径，基于 directory
+        return Path(self.directory) / folder
 
     def _maybe_install_deps(self, plugin_path: Path) -> None:
         if not _AUTO_INSTALL:

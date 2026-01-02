@@ -8,6 +8,7 @@ from ncatbot.utils import ncatbot_config, get_log, status
 from ..base_plugin import BasePlugin
 from ncatbot.core import EventBus
 from ncatbot.core.service import ServiceManager
+from ncatbot.core.service.builtin.unified_registry import command_registry, filter_registry
 from ..pluginsys_err import (
     PluginDependencyError,
     PluginVersionError,
@@ -65,7 +66,7 @@ class PluginLoader:
         # 在插件的线程池中执行初始化
         await asyncio.get_event_loop().run_in_executor(plugin.thread_pool, _run_init)
 
-    async def load_plugin_by_class(
+    async def _load_plugin_by_class(
         self, plugin_class: Type[BasePlugin], name: str, **kwargs
     ) -> BasePlugin:
         """
@@ -94,7 +95,7 @@ class PluginLoader:
             "system_manager": SystemManager,
         }
         for name, plg in plugins.items():
-            await self.load_plugin_by_class(plg, name)
+            await self._load_plugin_by_class(plg, name)
         LOG.info("已加载内置插件数 [%d]", len(self.plugins))
 
     async def load_plugins(self, **kwargs) -> None:
@@ -139,6 +140,8 @@ class PluginLoader:
     # -------------------- 单个插件的加载方法 ---------------------
     async def load_plugin(self, name: str, **kwargs) -> Optional[BasePlugin]:
         try:
+            command_registry.set_current_plugin_name(name)
+            filter_registry.set_current_plugin_name(name)
             module = self._importer.load_plugin_module(name)
             if module is None:
                 LOG.error("尝试加载失败的插件 %s: 模块未返回", name)
@@ -147,10 +150,24 @@ class PluginLoader:
             if plugin_class is None:
                 LOG.error("尝试加载失败的插件 %s: 未在模块中找到插件类", name)
                 return None
-            return await self.load_plugin_by_class(plugin_class, name, **kwargs)
+            return await self._load_plugin_by_class(plugin_class, name, **kwargs)
         except Exception as e:
             LOG.error("尝试加载失败的插件 %s: %s", name, e)
             return None
+
+    def index_external_plugin(self, plugin_dir: str) -> Optional[str]:
+        """索引一个外部插件文件夹
+        
+        读取插件的元数据并写入索引，之后可以使用 load_plugin 加载。
+        
+        Args:
+            plugin_dir: 插件文件夹的路径
+            
+        Returns:
+            插件名称，如果索引失败则返回 None
+        """
+        from pathlib import Path
+        return self._importer.index_external_plugin(Path(plugin_dir))
 
     async def unload_plugin(self, name: str, **kwargs) -> bool:
         """卸载单个插件。"""
