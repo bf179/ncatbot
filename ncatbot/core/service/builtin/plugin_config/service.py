@@ -150,6 +150,7 @@ class PluginConfigService(BaseService):
         self, plugin_name: str, legacy_data_file: "Path"
     ) -> PluginConfig:
         """
+        TODO: 潜在的不一致问题；外部手工修改和内部修改可能不同步。
         获取插件配置包装器，如果配置不存在且有旧版文件则自动迁移。
         
         Args:
@@ -197,6 +198,21 @@ class PluginConfigService(BaseService):
         self._dirty = True
         await self._persistence.save_all(self._configs)
         self._dirty = False
+    
+    async def reload_plugin_config(self, plugin_name: str) -> Dict[str, Any]:
+        """
+        重载指定插件的配置，从配置文件重新读入。
+        
+        Args:
+            plugin_name: 插件名称
+        
+        Returns:
+            重载后的插件配置
+        """
+        new_config = await self._persistence.load_plugin(plugin_name)
+        self._configs[plugin_name] = new_config
+        LOG.info(f"已重载插件 {plugin_name} 的配置")
+        return new_config
     
     async def migrate_from_legacy(self, plugin_name: str, legacy_config: Dict[str, Any]) -> None:
         """从旧格式迁移配置"""

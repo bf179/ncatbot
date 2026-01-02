@@ -8,7 +8,7 @@
 # -------------------------
 from uuid import UUID
 from pathlib import Path
-from typing import Any, Dict, List, Set, Union, TYPE_CHECKING
+from typing import Any, Dict, List, Set, Union, TYPE_CHECKING, Optional, Callable
 from concurrent.futures import ThreadPoolExecutor
 
 from ncatbot.utils import get_log
@@ -16,6 +16,7 @@ from ncatbot.core import EventBus, NcatBotEvent
 from ncatbot.core.service import ServiceManager
 
 if TYPE_CHECKING:
+    from .builtin_mixin.ncatbot_plugin import NcatBotPlugin
     from .loader import PluginLoader
     from ncatbot.core.service.builtin import RBACService, PluginConfigService, PluginConfig
 
@@ -36,7 +37,7 @@ class BasePlugin:
     author: str = "Unknown"
     description: str = "这个作者很懒且神秘，没有写一点点描述，真是一个神秘的插件"
     dependencies: Dict[str, str] = {}
-    config: Union[dict, "PluginConfig"]
+    config: "PluginConfig"
 
     # -------- 运行时属性 --------
     first_load: bool = True
@@ -95,8 +96,8 @@ class BasePlugin:
 
     @property
     def meta_data(self) -> Dict[str, Any]:
-        if hasattr(self, "_meta_data") and isinstance(self._meta_data, dict):
-            md = dict(self._meta_data)
+        if hasattr(self, "_meta_data") and isinstance(self._meta_data, dict): # type: ignore
+            md = dict(self._meta_data) # type: ignore
             md.setdefault("name", getattr(self, "name", "Unknown"))
             md.setdefault("version", getattr(self, "version", "0.0.0"))
             md.setdefault("author", getattr(self, "author", "Unknown"))
@@ -115,7 +116,7 @@ class BasePlugin:
 
     @property
     def thread_pool(self) -> ThreadPoolExecutor:
-        return None
+        return None # type: ignore
     
     @property
     def rbac(self) -> "RBACService":
@@ -131,9 +132,9 @@ class BasePlugin:
     def register_handler(
         self,
         event_type: str,
-        handler: callable,
+        handler: Callable,
         priority: int = 0,
-        timeout: float = None,
+        timeout: Optional[float] = None,
     ) -> UUID:
         """注册事件处理器。"""
         if event_type in ["group_message", "private_message"]:
@@ -160,14 +161,9 @@ class BasePlugin:
         """发布事件。"""
         return await self._event_bus.publish(NcatBotEvent(event_type, data))
 
-    async def request(self, addr: str, data: dict = None) -> Any:
-        """发送请求并等待响应。"""
-        result = await self._event_bus.publish(NcatBotEvent(f"SERVER-{addr}", data))
-        return result[0] if result else None
-
-    def get_plugin(self, name: str) -> "BasePlugin":
+    def get_plugin(self, name: str) -> Optional["NcatBotPlugin"]:
         """根据插件名称获取插件实例。"""
-        return self._loader.get_plugin(name)
+        return self._loader.get_plugin(name) # type: ignore
 
     def list_plugins(self, *, obj: bool = False) -> List[Union[str, "BasePlugin"]]:
         """插件列表。"""

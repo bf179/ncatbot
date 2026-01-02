@@ -12,7 +12,6 @@ from ..pluginsys_err import (
     PluginDependencyError,
     PluginVersionError,
 )
-from ..config import config
 from ..builtin_plugin import SystemManager, UnifiedRegistryPlugin
 from packaging.specifiers import SpecifierSet
 from packaging.version import parse as parse_version

@@ -184,6 +184,20 @@ class ConfigPersistence:
             LOG.error(f"加载插件配置失败: {e}")
             return {}
     
+    async def load_plugin(self, plugin_name: str) -> Dict[str, Any]:
+        """异步加载单个插件的配置"""
+        try:
+            if not self._config_path.exists():
+                return {}
+            async with aiofiles.open(self._config_path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(await f.read()) or {}
+            plugin_config = data.get("plugin_config", {}).get(plugin_name, {})
+            LOG.debug(f"从配置文件加载了插件 {plugin_name} 的配置")
+            return plugin_config
+        except Exception as e:
+            LOG.error(f"加载插件 {plugin_name} 配置失败: {e}")
+            return {}
+    
     async def save_all(self, configs: Dict[str, Dict[str, Any]]) -> None:
         """异步保存所有配置"""
         try:

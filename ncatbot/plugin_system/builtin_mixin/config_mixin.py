@@ -6,12 +6,12 @@
 
 采用"严格的写时保存"策略：
 - 每次写配置时立即持久化
-- self.config 是只读字典，不允许直接修改
+- self.config 是 PluginConfig 只读包装器，不允许直接修改
 - 必须通过 set_config() 或 self.config.update() 方法更新
 """
 
-from typing import Any, Dict, Union, Callable, Optional, TYPE_CHECKING
-from ncatbot.utils import get_log
+from typing import Any, Dict, Callable, TYPE_CHECKING, Optional
+from ncatbot.utils import get_log, run_coroutine
 
 if TYPE_CHECKING:
     from ncatbot.core.service import ServiceManager
@@ -60,20 +60,17 @@ class ConfigMixin:
     
     # 类型提示（实际属性由 BasePlugin 提供）
     name: str
-    config: Union[dict, "PluginConfig"]
+    config: "PluginConfig"
     services: "ServiceManager"
     
     @property
     def _config_service(self):
         """获取配置服务（内部使用）"""
-        return self.services.plugin_config if self.services else None
+        return self.services.plugin_config
     
     def get_registered_configs(self) -> Dict[str, "ConfigItem"]:
         """获取本插件所有已注册的配置项"""
-        config_service = self._config_service
-        if config_service:
-            return config_service.get_registered_configs(self.name)
-        return {}
+        return self._config_service.get_registered_configs(self.name)
 
     def register_config(
         self,
@@ -81,11 +78,11 @@ class ConfigMixin:
         default_value: Any = None,
         description: str = "",
         value_type: type = str,
-        metadata: Dict[str, Any] = None,
-        on_change: Callable = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        on_change: Optional[Callable] = None,
         *args,
         **kwargs,
-    ) -> Optional["ConfigItem"]:
+    ) -> "ConfigItem":
         """
         注册一个配置项
         
@@ -117,28 +114,17 @@ class ConfigMixin:
 
         LOG.debug(f"插件 {self.name} 注册配置 {name}")
         
-        config_service = self._config_service
-        if config_service:
-            config_item = config_service.register_config(
-                plugin_name=self.name,
-                name=name,
-                default_value=default_value,
-                description=description,
-                value_type=value_type,
-                metadata=metadata,
-                on_change=on_change,
-            )
-            # 同步 PluginConfig 包装器的内部数据
-            if hasattr(self.config, '_sync_from_service'):
-                self.config._sync_from_service()
-            return config_item
-        
-        # 无配置服务时直接存储到本地（开发/测试场景）
-        if isinstance(value_type, str):
-            value_type = eval(value_type)
-        if isinstance(self.config, dict) and self.config.get(name) is None:
-            self.config[name] = default_value if isinstance(default_value, (dict, list)) else value_type(default_value)
-        return None
+        config_item = self._config_service.register_config(
+            plugin_name=self.name,
+            name=name,
+            default_value=default_value,
+            description=description,
+            value_type=value_type,
+            metadata=metadata,
+            on_change=on_change,
+        )
+        self.config._sync_from_service()
+        return config_item
     
     def get_config(self, name: str, default: Any = None) -> Any:
         """
@@ -151,14 +137,13 @@ class ConfigMixin:
         Returns:
             配置值
         """
-        # 优先从本地 config 获取（无论是 PluginConfig 还是 dict）
         return self.config.get(name, default)
     
     def set_config(self, name: str, value: Any) -> tuple:
         """
-        设置配置值（触发原子保存）
+        设置配置值（触发原子保存和变更回调）
         
-        此方法会立即将配置写入文件。
+        此方法会立即将配置写入文件，并触发 on_change 回调。
         
         Args:
             name: 配置项名称
@@ -166,16 +151,23 @@ class ConfigMixin:
             
         Returns:
             (old_value, new_value) 元组
+            
+        Raises:
+            Exception: 如果配置更新或变更回调失败
         """
-        # 如果是 PluginConfig 包装器，使用其 update 方法
-        if hasattr(self.config, 'update') and callable(getattr(self.config, 'update')):
-            # PluginConfig.update 会触发原子保存
-            return self.config.update(name, value)
-        
-        # 降级处理：无配置服务时直接修改本地字典（开发/测试场景）
-        if isinstance(self.config, dict):
-            old_value = self.config.get(name)
-            self.config[name] = value
-            return (old_value, value)
-        
-        raise TypeError(f"config 类型不支持: {type(self.config)}")
+        configs = self.get_registered_configs()
+        if name not in configs:
+            raise ValueError(f"插件 {self.name} 未注册配置 {name}")
+        try:
+            old_value, new_value = self.config.update(name, value)
+            
+            # 触发变更回调
+            if old_value != new_value:
+                config_item = configs.get(name)
+                if config_item and config_item.on_change:
+                    run_coroutine(config_item.on_change, old_value, new_value)
+            
+            return (old_value, new_value)
+        except Exception as e:
+            LOG.error(f"设置配置 {name} 失败: {e}")
+            raise e

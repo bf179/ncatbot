@@ -9,6 +9,7 @@ import time
 import asyncio
 import os
 from pathlib import Path
+from typing import Optional
 
 LOG = get_log("SystemManager")
 
@@ -216,26 +217,15 @@ class SystemManager(NcatBotPlugin):
     async def set_config(
         self, event: MessageEvent, plugin_name: str, config_name: str, value: str
     ) -> None:
-        plugin = self.get_plugin(plugin_name)
+        plugin: Optional["NcatBotPlugin"] = self.get_plugin(plugin_name)
         if not plugin:
             await event.reply(f"未找到插件 {plugin_name}")
             return
-        configs = plugin.get_registered_configs()
-        if config_name not in configs:
-            await event.reply(f"插件 {plugin_name} 未注册配置 {config_name}")
-            return
-        
-        # 使用 ConfigMixin 提供的接口
-        if hasattr(plugin, 'set_config'):
-            oldvalue, newvalue = plugin.set_config(config_name, value)
-            
-            # 触发变更回调
-            config_item = configs.get(config_name)
-            if config_item and hasattr(config_item, 'on_change') and config_item.on_change:
-                run_coroutine(config_item.on_change, oldvalue, newvalue)
+        try:
+            _, newvalue = plugin.set_config(config_name, value)
             await event.reply(f"插件 {plugin_name} 配置 {config_name} 更新为 {newvalue}")
-        else:
-            await event.reply(f"插件 {plugin_name} 不支持配置修改")
+        except Exception as e:
+            await event.reply(f"插件 {plugin_name} 配置 {config_name} 更新失败: {e}")
 
     async def unload_plugin(self, event: NcatBotEvent) -> bool:
         """卸载插件, 可以把自己卸了"""
