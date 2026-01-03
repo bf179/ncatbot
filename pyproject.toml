@@ -12,45 +12,55 @@ authors = [ { name = "木子", email = "lyh_02@qq.com" }, { name = "huan-yp", em
 urls = { "Source" = "https://github.com/liyihao1110/ncatbot", "Bug Reports" = "https://github.com/liyihao1110/ncatbot/issues", "Documentation" = "https://github.com/liyihao1110/ncatbot/wiki" }
 requires-python = ">=3.8"
 dependencies = [
-  "toml",
-  "qrcode",
+  # 数据模型
+  "pydantic>=2.0",
+  # 定时任务
   "schedule",
-  "urllib3",
+  # 配置文件
+  "pyyaml>=6.0",
+  "toml",
+  # 网络通信
   "websockets",
-  "packaging",
-  "rich",
+  "requests>=2.28",
+  # 异步文件操作
   "aiofiles",
+  # 系统信息
+  "psutil>=5.9",
+  # 版本解析
+  "packaging",
+  # 终端输出
+  "rich",
+  "tqdm>=4.60",
+  # 类型提示
   "typing-extensions",
+  # QR 码生成
+  "qrcode",
+  # Windows 终端颜色支持
   "colorama>=0.4.6; platform_system == \"Windows\"",
-  "importlib-metadata>=8.6.1; python_version >= '3.9'",
-  "importlib-metadata>=4.0; python_version < '3.9'",
-  "httpx>=0.28.1",
-  "psutil>=6.1.1",
-  "pyyaml>=6.0.2",
-  "requests>=2.32.3",
-  "tqdm>=4.67.1",
 ]
 
 [project.optional-dependencies]
-# Dependencies useful for development and testing. Install with:
-#   pip install '.[dev]' or '.[test]'
+# 测试依赖。使用 pip install '.[test]' 安装
+test = [
+  "pytest>=7.0",
+  "pytest-asyncio>=0.21",
+  "pytest-cov>=4.0",
+  "pytest-html>=4.0",
+]
+# 开发依赖。使用 pip install '.[dev]' 安装（包含测试依赖）
 dev = [
+  "ncatbot[test]",
   "build",
   "twine",
   "tox>=4.0",
   "tox-uv",
   "uv",
-  "pytest",
-  "pytest-cov",
+  "pip-tools",
   "pre-commit",
   "black",
   "ruff",
   "mypy",
   "isort",
-]
-test = [
-  "pytest",
-  "pytest-cov",
 ]
 
 [tool.setuptools.packages.find]
@@ -63,14 +73,6 @@ write_to = "ncatbot/_version.py"
 write_to_template = "__version__ = \"{version}\"\n"
 fallback_version = "0+unknown"
 tag_regex = "^(?P<prefix>v)?(?P<version>\\d+\\.\\d+\\.\\d+.*)$"
-
-[dependency-groups]
-dev = [
-    "pydantic>=2.10.6",
-    "pytest-asyncio>=0.24.0",
-    "pytest-cov>=5.0.0",
-    "pytest-html>=4.1.1",
-]
 
 [tool.pytest.ini_options]
 asyncio_mode = "strict"

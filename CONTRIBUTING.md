@@ -24,9 +24,20 @@ cd ncatbot
 
 ### 准备开发环境
 
+推荐使用 uv 管理环境：
+
+```bash
+uv venv
+source .venv/bin/activate  # Linux/macOS
+# 或 .venv\Scripts\activate  # Windows
+uv pip install -e '.[dev]'
+```
+
+或使用传统 pip：
+
 ```bash
 python -m venv .venv
-. .venv/bin/activate
+source .venv/bin/activate
 pip install -e '.[dev]'
 ```
 
@@ -57,8 +68,43 @@ git commit -m "docs: 更新安装指南"
 
 ## 测试
 
-- 请手动测试你修改过的部分。
-- 未来将引入规范化的集成测试和单元测试。
+运行测试：
+
+```bash
+pytest
+```
+
+运行带覆盖率的测试：
+
+```bash
+pytest --cov=ncatbot --cov-report=term-missing
+```
+
+## 依赖管理
+
+本项目使用 pip-tools 工作流管理依赖：
+
+- **pyproject.toml**：定义顶层依赖（宽泛版本）
+- **requirements.txt**：由 pip-compile 自动生成的锁定版本文件
+
+### 更新依赖
+
+如需添加或修改依赖：
+
+1. 编辑 `pyproject.toml` 中的 `dependencies` 列表
+2. 重新生成 requirements.txt：
+
+```bash
+pip-compile pyproject.toml -o requirements.txt --strip-extras
+```
+
+3. 将两个文件一起提交
+
+### 升级所有依赖到最新版本
+
+```bash
+pip-compile pyproject.toml -o requirements.txt --strip-extras --upgrade
+```
 
 ## 提交 PR
 
