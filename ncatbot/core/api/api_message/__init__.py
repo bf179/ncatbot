@@ -37,7 +37,6 @@ if TYPE_CHECKING:
 # MessageAPI 组合类
 # =============================================================================
 
-
 @generate_sync_methods
 class MessageAPI(
     GroupMessageMixin,

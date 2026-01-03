@@ -15,6 +15,7 @@ from typing import (
     Dict,
     List,
     Optional,
+    Type,
     TYPE_CHECKING,
     TypeVar,
 )
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
 LOG = get_log("API")
 T = TypeVar("T")
 R = TypeVar("R")
+_C = TypeVar("_C")
 
 
 # =============================================================================
@@ -364,19 +366,24 @@ def sync_wrapper(async_method: Callable[..., T]) -> Callable[..., T]:
     return wrapper  # type: ignore
 
 
-def generate_sync_methods(cls: type) -> type:
+def generate_sync_methods(cls: type[_C]) -> type[_C]:
     """
     类装饰器：为所有异步方法自动生成同步版本
 
     同步方法命名规则：{method_name}_sync
 
+    使用 Type[_C] 泛型保持原始类的类型信息，确保装饰后的类仍然具有
+    正确的类型注解，IDE 可以正常提供异步方法的类型提示。
+
+    Note:
+        动态生成的同步方法（*_sync）无法在静态分析中被识别。
+
     Args:
         cls: 要处理的类
 
     Returns:
-        添加了同步方法的类
+        添加了同步方法的类（保持原始类型）
     """
-    import asyncio
     import inspect
 
     for name, method in inspect.getmembers(cls, predicate=inspect.iscoroutinefunction):
