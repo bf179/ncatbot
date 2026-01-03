@@ -1,4 +1,4 @@
-"""Main entry point for NcatBot CLI."""
+"""NcatBot CLI 入口"""
 
 import argparse
 import os
@@ -17,7 +17,7 @@ logger = get_log("CLI")
 
 
 def setup_work_directory(work_dir: Optional[str] = None) -> None:
-    """Set up the working directory for NcatBot."""
+    """设置工作目录"""
     if work_dir is None:
         work_dir = os.getcwd()
 
@@ -28,7 +28,7 @@ def setup_work_directory(work_dir: Optional[str] = None) -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    """Parse command line arguments."""
+    """解析命令行参数"""
     parser = argparse.ArgumentParser(description="NcatBot CLI")
     parser.add_argument("-c", "--command", help="要执行的命令")
     parser.add_argument("-a", "--args", nargs="*", help="命令参数", default=[])
@@ -39,10 +39,10 @@ def parse_args() -> argparse.Namespace:
 
 
 def handle_command_mode(args: argparse.Namespace) -> None:
-    """Handle command line mode."""
+    """处理命令行模式"""
     from ncatbot.utils.logger import logging
 
-    if args.command not in ["run", "start", "r"]:  # 有些时候日志很烦
+    if args.command not in ["run", "start", "s"]:
         logging.getLogger().setLevel(logging.WARNING)
 
     try:
@@ -54,7 +54,7 @@ def handle_command_mode(args: argparse.Namespace) -> None:
 
 
 def handle_interactive_mode() -> None:
-    """Handle interactive mode."""
+    """处理交互模式"""
     print(header("输入 help 查看帮助"))
     print(header("输入 s 启动 NcatBot, 输入 q 退出 CLI"))
     while True:
@@ -79,10 +79,10 @@ def handle_interactive_mode() -> None:
 
 
 def main() -> None:
-    """Main entry point for the CLI."""
+    """CLI 主入口"""
     args = parse_args()
 
-    # Show version and exit if requested
+    # 显示版本信息
     if args.version:
         show_meta()
         return
@@ -94,7 +94,7 @@ def main() -> None:
         print(error(str(e)))
         sys.exit(1)
 
-    # Check if QQ number is set to default value and prompt for setting it
+    # 检查 QQ 号是否设置
     if config.bt_uin == config._default_bt_uin:
         print(warning("检测到 QQ 号未设置，请先设置 QQ 号"))
         set_qq()

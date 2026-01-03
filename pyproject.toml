@@ -88,8 +88,6 @@ omit = [
     "ncatbot/_version.py",
     # 测试文件
     "ncatbot/**/test_*.py",
-    # CLI 模块（交互式命令行，需要单独的集成测试）
-    "ncatbot/cli/*",
     # MCP 模块（Model Context Protocol 服务端，需要外部 MCP 客户端测试）
     "ncatbot/mcp/*",
     # 网络 I/O（需要真实网络环境）

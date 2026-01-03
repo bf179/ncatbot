@@ -1,13 +1,8 @@
-"""sys management commands for NcatBot CLI."""
-
-import subprocess
-import sys
-import time
+"""系统管理命令"""
 
 from ncatbot.cli.commands.registry import registry
-from ncatbot.cli.utils import PYPI_SOURCE, CLIExit
+from ncatbot.cli.utils import CLIExit
 from ncatbot.cli.utils.colors import error, header, info, success
-from ncatbot.core import BotClient, install_napcat
 from ncatbot.utils.logger import get_log
 
 LOG = get_log("CLI")
@@ -16,21 +11,20 @@ LOG = get_log("CLI")
 @registry.register(
     "start",
     "启动 NcatBot",
-    "start [-d|-D|--debug]",
+    "start",
     aliases=["s", "run"],
     category="sys",
 )
-def start(*args: str) -> None:
-    """Start the NcatBot client."""
+def start() -> None:
+    """启动 NcatBot 客户端"""
+    from ncatbot.core import BotClient
+
     print(header("正在启动 NcatBot..."))
     print(info("按下 Ctrl + C 可以正常退出程序"))
 
     try:
-        # 创建客户端
-        client = BotClient()  # 密码暂时为空
-        # 启动客户端（带调试选项）
+        client = BotClient()
         client.run()
-
     except Exception as e:
         LOG.error(f"启动失败: {e}")
         print(error(f"启动失败: {e}"))
@@ -38,50 +32,52 @@ def start(*args: str) -> None:
 
 @registry.register(
     "update",
-    "更新 NcatBot 和 NapCat",
+    "更新 NcatBot",
     "update",
     aliases=["u", "upgrade"],
     category="sys",
-    show_in_help=False,
 )
 def update() -> None:
-    """Update NcatBot and NapCat."""
-    print(header("正在更新 NapCat 版本"))
-    install_napcat()
+    """更新 NcatBot 到最新版本"""
+    import subprocess
+    import sys
 
-    print(header("正在更新 Ncatbot 版本, 更新后请重新运行 NcatBotCLI 或者 main.exe"))
-    time.sleep(1)
+    from ncatbot.cli.utils import PYPI_SOURCE
 
-    subprocess.Popen(
-        [
-            sys.executable,
-            "-m",
-            "pip",
-            "install",
-            "--upgrade",
-            "ncatbot",
-            "-i",
-            PYPI_SOURCE,
-        ],
-        shell=True,
-        start_new_session=True,
-    )
+    print(header("正在更新 NcatBot..."))
 
-    print(info("Ncatbot 正在更新..."))
-    time.sleep(10)
-    print(success("更新成功, 请重新运行 NcatBotCLI 或者 main.exe"))
-    exit(0)
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--upgrade",
+                "ncatbot",
+                "-i",
+                PYPI_SOURCE,
+            ],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0:
+            print(success("NcatBot 更新成功!"))
+            print(info("请重新启动 CLI 以使用新版本"))
+        else:
+            print(error(f"更新失败: {result.stderr}"))
+    except Exception as e:
+        print(error(f"更新时出错: {e}"))
 
 
 @registry.register(
     "exit",
-    "退出 CLI 工具",
+    "退出 CLI",
     "exit",
     aliases=["quit", "q"],
     category="sys",
-    show_in_help=False,
 )
 def exit_cli() -> None:
-    """Exit the CLI tool."""
-    print("\n" + info("正在退出 Ncatbot CLI. 再见!"))
+    """退出 CLI 工具"""
+    print("\n" + info("再见!"))
     raise CLIExit()

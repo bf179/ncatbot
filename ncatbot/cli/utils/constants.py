@@ -1,9 +1,4 @@
-"""Constants used throughout the NcatBot CLI."""
+"""CLI 常量定义"""
 
-# Package management
+# PyPI 镜像源
 PYPI_SOURCE = "https://mirrors.aliyun.com/pypi/simple/"
-
-# URLs
-PLUGIN_INDEX_URL = (
-    "https://raw.githubusercontent.com/ncatbot/NcatBot-Plugins/main/index.json"
-)
