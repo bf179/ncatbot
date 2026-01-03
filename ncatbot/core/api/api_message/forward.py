@@ -242,7 +242,3 @@ class ForwardMessageMixin(APIComponent):
     # -------------------------------------------------------------------------
     # 占位方法（由其他 API 实现）
     # -------------------------------------------------------------------------
-
-    async def get_login_info(self):
-        """获取登录信息（应由 AccountAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by AccountAPI")

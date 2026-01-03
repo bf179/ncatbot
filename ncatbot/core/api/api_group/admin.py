@@ -212,23 +212,3 @@ class GroupAdminMixin(APIComponent):
         )
         APIReturnStatus.raise_if_failed(result)
         return result
-
-    # -------------------------------------------------------------------------
-    # 消息发送方法占位（由 MessageAPI 实现）
-    # -------------------------------------------------------------------------
-
-    async def send_group_image(self, group_id: Union[str, int], image: str) -> str:
-        """发送群图片（应由 MessageAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by MessageAPI")
-
-    async def send_group_record(self, group_id: Union[str, int], file: str) -> str:
-        """发送群语音（应由 MessageAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by MessageAPI")
-
-    async def send_group_video(self, group_id: Union[str, int], video: str) -> str:
-        """发送群视频（应由 MessageAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by MessageAPI")
-
-    async def send_group_file(self, group_id: Union[str, int], file: str) -> str:
-        """发送群文件（应由 MessageAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by MessageAPI")

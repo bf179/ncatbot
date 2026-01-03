@@ -143,23 +143,3 @@ class PrivateAPI(APIComponent):
             {"event_type": event_type, "user_id": user_id},
         )
         APIReturnStatus.raise_if_failed(result)
-
-    # -------------------------------------------------------------------------
-    # region 占位方法（由 MessageAPI 实现）
-    # -------------------------------------------------------------------------
-
-    async def send_private_image(self, user_id: Union[str, int], image: str) -> str:
-        """发送私聊图片（应由 MessageAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by MessageAPI")
-
-    async def send_private_record(self, user_id: Union[str, int], file: str) -> str:
-        """发送私聊语音（应由 MessageAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by MessageAPI")
-
-    async def send_private_video(self, user_id: Union[str, int], video: str) -> str:
-        """发送私聊视频（应由 MessageAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by MessageAPI")
-
-    async def send_private_file(self, user_id: Union[str, int], file: str) -> str:
-        """发送私聊文件（应由 MessageAPI 实现）"""
-        raise NotImplementedError("This method should be implemented by MessageAPI")
