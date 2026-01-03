@@ -2,7 +2,6 @@
 Client 模块测试共享 fixtures
 """
 
-import asyncio
 from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
 
@@ -327,11 +326,6 @@ def mock_heartbeat_event():
 def create_ncatbot_event(event_type: str, data: Any) -> NcatBotEvent:
     """辅助函数：创建 NcatBotEvent"""
     return NcatBotEvent(event_type, data)
-
-
-def run_async(coro):
-    """辅助函数：运行异步协程"""
-    return asyncio.get_event_loop().run_until_complete(coro)
 
 
 def create_mock_handler(name: str = "mock_handler"):

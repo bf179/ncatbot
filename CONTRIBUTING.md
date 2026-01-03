@@ -82,7 +82,7 @@ uv run pytest --cov=ncatbot --cov-report=term-missing
 
 ### 多版本测试（可选）
 
-如需在多个 Python 版本（3.9, 3.10, 3.12, 3.13）上运行测试，可使用 tox：
+如需在多个 Python 版本（3.13, 3.11, 3.9）上运行测试，可使用 tox：
 
 ```bash
 uv run tox
@@ -91,7 +91,7 @@ uv run tox
 也可以只运行特定版本：
 
 ```bash
-uv run tox -e py312
+uv run tox -e py313
 ```
 
 > 注意：多版本测试不是提交 PR 的必要条件，CI 会自动在多版本上运行测试。

@@ -171,7 +171,10 @@ def list_plugins() -> None:
         manifest_path = plugin_dir / "manifest.toml"
         if manifest_path.exists():
             try:
-                import tomllib
+                try:
+                    import tomllib
+                except ModuleNotFoundError:
+                    import tomli as tomllib
 
                 manifest = tomllib.loads(manifest_path.read_text(encoding="utf-8"))
                 name = manifest.get("name", plugin_dir.name)
