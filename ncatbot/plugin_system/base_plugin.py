@@ -34,19 +34,19 @@ class BasePlugin:
     实际初始化逻辑在 NcatBotPlugin 中实现。
     """
 
-    # -------- 插件元数据 --------
+    # -------- 插件元数据, 插件系统读取 manifest.toml 注入 --------
     name: str
     version: str
     author: str = "Unknown"
     description: str = "这个作者很懒且神秘，没有写一点点描述，真是一个神秘的插件"
     dependencies: Dict[str, str] = {}
 
-    # -------- 运行时属性 --------
+    # -------- 运行时属性, 插件 __onload__ 时自行注入 --------
     workspace: Path  # 插件工作目录, 不知道有什么用
     config: "PluginConfig"  # 持久化配置对象, __onload__ 时调用有关服务自动加载
     data: Dict[str, Any]  # 持久化数据字典, __onload__ 时调用有关服务自动加载
 
-    # -------- 外部注入的属性 -------
+    # -------- PluginLoader 注入的外部属性, 用于直接或间接使用服务 -------
     services: ServiceManager  # 用于访问服务, 可见, 由 PluginLoader 在 init 时注入
     api: "BotAPI"  # 访问 Bot API, 可见, 由 PluginLoader 在 init 时注入
     _event_bus: (
@@ -96,6 +96,14 @@ class BasePlugin:
         return self._event_bus
 
     @property
+    def rbac(self) -> "RBACService":
+        return self.services.rbac
+
+    @property
+    def config_service(self) -> "PluginConfigService":
+        return self.services.plugin_config
+
+    @property
     def debug(self) -> bool:
         return self._debug
 
@@ -118,14 +126,6 @@ class BasePlugin:
             "dependencies": self.dependencies,
             "config": self.config,
         }.copy()
-
-    @property
-    def rbac(self) -> "RBACService":
-        return self.services.rbac  # type: ignore
-
-    @property
-    def config_service(self) -> "PluginConfigService":
-        return self.services.plugin_config
 
     # ------------------------------------------------------------------
     # 事件系统接口
