@@ -32,14 +32,14 @@ RELOAD_PLUGIN_MAIN = RELOAD_PLUGIN_DIR / "main.py"
 _ORIGINAL_CONTENT = None
 
 # 等待热重载完成的时间（需要足够长以确保稳定）
-WAIT_TIME = 0.05
+WAIT_TIME = 0.1
 
 
 def _get_original_content() -> Optional[str]:
     """获取插件文件的原始内容"""
     global _ORIGINAL_CONTENT
     if _ORIGINAL_CONTENT is None and RELOAD_PLUGIN_MAIN.exists():
-        content = RELOAD_PLUGIN_MAIN.read_text()
+        content = RELOAD_PLUGIN_MAIN.read_text(encoding="utf-8")
         # 检查是否是原始状态（MARKER_VALUE 和 COMMAND_RESPONSE 都是 original）
         is_original = (
             'MARKER_VALUE: str = "original"' in content
@@ -76,7 +76,7 @@ def _reset_plugin_file():
 
     original = _get_original_content()
     if original:
-        RELOAD_PLUGIN_MAIN.write_text(original)
+        RELOAD_PLUGIN_MAIN.write_text(original, encoding="utf-8")
         # 重置 mtime 到当前时间，避免使用之前测试留下的"未来"时间
         current_time = time.time()
         os.utime(str(RELOAD_PLUGIN_MAIN), (current_time, current_time))
@@ -100,10 +100,10 @@ def get_plugin_class(plugin_name: str):
 def modify_plugin_file(file_path: Path, replacements: Dict[str, str]) -> str:
     """修改插件文件内容"""
 
-    content = file_path.read_text()
+    content = file_path.read_text(encoding="utf-8")
     for old, new in replacements.items():
         content = content.replace(old, new)
-    file_path.write_text(content)
+    file_path.write_text(content, encoding="utf-8")
 
     return content
 

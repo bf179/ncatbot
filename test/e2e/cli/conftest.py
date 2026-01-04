@@ -45,7 +45,8 @@ version = "1.0.0"
 author = "Test Author"
 description = "A sample plugin for testing"
 main = "plugin.py"
-"""
+""",
+        encoding="utf-8",
     )
 
     # 创建 plugin.py
@@ -55,11 +56,12 @@ main = "plugin.py"
 
 class SamplePlugin(NcatBotPlugin):
     pass
-"""
+""",
+        encoding="utf-8",
     )
 
     # 创建 __init__.py
     init_py = plugin_dir / "__init__.py"
-    init_py.write_text("from .plugin import SamplePlugin\n")
+    init_py.write_text("from .plugin import SamplePlugin\n", encoding="utf-8")
 
     return plugin_dir

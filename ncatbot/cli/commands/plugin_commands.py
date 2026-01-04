@@ -73,10 +73,16 @@ def create_plugin_template(
             print(error(f"模板目录不存在: {TEMPLATE_DIR}"))
             return
 
-        # 复制模板文件
+        # 复制模板文件（使用 UTF-8 编码保证跨平台兼容性）
         for file in TEMPLATE_DIR.iterdir():
             if file.is_file():
-                shutil.copy2(file, plugin_dir / file.name)
+                # 使用 UTF-8 编码读取源文件
+                try:
+                    content = file.read_text(encoding="utf-8")
+                    (plugin_dir / file.name).write_text(content, encoding="utf-8")
+                except Exception:
+                    # 如果 UTF-8 失败，使用二进制复制作为备选
+                    shutil.copy2(file, plugin_dir / file.name)
 
         # 替换模板内容
         replacements = {
