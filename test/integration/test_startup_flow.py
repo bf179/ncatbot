@@ -85,8 +85,8 @@ class TestLifecycleValidation:
             patch("ncatbot.core.client.lifecycle.launch_napcat_service"),
             patch("ncatbot.plugin_system.PluginLoader"),
         ):
-            manager._prepare_startup(bt_uin="123456", mock=True)
-            mock_cfg.update_value.assert_any_call("bt_uin", "123456")
+            manager._prepare_startup(bot_uin="123456", mock=True)
+            mock_cfg.update_value.assert_any_call("bot_uin", "123456")
 
 
 class TestLifecycleAsyncFlow:
@@ -102,7 +102,7 @@ class TestLifecycleAsyncFlow:
             patch("ncatbot.core.client.lifecycle.ncatbot_config") as mock_config,
         ):
             # 配置 ncatbot_config mock
-            mock_config.plugin.skip_plugin_load = False
+            mock_config.plugin.load_plugin = True
             mock_config.plugin.plugins_dir = "/tmp/test_plugins"
             mock_config.debug = False
 
@@ -113,7 +113,7 @@ class TestLifecycleAsyncFlow:
             mock_loader_instance.unload_all = AsyncMock()
 
             # 1. 启动
-            api = await manager.run_backend_async(mock=True, skip_plugin_load=False)
+            api = await manager.run_backend_async(mock=True, load_plugin=True)
 
             # 2. 验证 API 返回
             assert isinstance(api, BotAPI)

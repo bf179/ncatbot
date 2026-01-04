@@ -17,9 +17,9 @@ def temp_plugins_dir(tmp_path):
 def mock_config(temp_plugins_dir):
     """Mock 配置对象"""
     config = MagicMock()
-    config.bt_uin = "123456789"
+    config.bot_uin = "123456789"
     config.root = "987654321"
-    config._default_bt_uin = "123456"
+    config._default_bot_uin = "123456"
     config.debug = False
 
     # 插件配置

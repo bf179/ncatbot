@@ -37,7 +37,7 @@ class NcatBotClient:
         logger.info("正在初始化 NcatBot 后端连接...")
 
         try:
-            result = self.bot.run_backend(bt_uin=self.bot_qq, root=self.admin_qq)
+            result = self.bot.run_backend(bot_uin=self.bot_qq, root=self.admin_qq)
             if inspect.isawaitable(result):
                 self.api = await result
             else:

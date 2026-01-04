@@ -43,7 +43,7 @@ class TestLifecycleManagerInit:
 
         manager = LifecycleManager(mock_services, event_bus, registry)
 
-        assert manager._skip_plugin_load is False
+        assert manager._load_plugin is True
         assert manager._startup_event is None
         assert manager.plugin_loader is None
 
@@ -85,15 +85,14 @@ class TestPrepareStartup:
 
     @patch("ncatbot.core.client.lifecycle.launch_napcat_service")
     @patch("ncatbot.core.client.lifecycle.ncatbot_config")
-    def test_prepare_startup_skip_plugin_load(self, mock_config, mock_launch, manager):
-        """测试跳过插件加载"""
+    def test_prepare_startup_load_plugin(self, mock_config, mock_launch, manager):
+        """测试加载插件"""
         mock_config.debug = False
-        # 模拟 update_value 后 skip_plugin_load 被设置为 True
-        mock_config.plugin.skip_plugin_load = True
+        # 模拟 update_value 后 load_plugin 被设置为 True
+        mock_config.plugin.load_plugin = True
+        manager._prepare_startup(mock=True, load_plugin=True)
 
-        manager._prepare_startup(mock=True, skip_plugin_load=True)
-
-        assert manager._skip_plugin_load is True
+        assert manager._load_plugin is True
 
     @patch("ncatbot.core.client.lifecycle.ncatbot_config")
     def test_prepare_startup_illegal_arg(self, mock_config, manager):
@@ -237,7 +236,7 @@ class TestLegalArgs:
     def test_legal_args_contains_expected_keys(self):
         """测试 LEGAL_ARGS 包含预期的键"""
         expected = {
-            "bt_uin",
+            "bot_uin",
             "root",
             "ws_uri",
             "webui_uri",
@@ -246,9 +245,8 @@ class TestLegalArgs:
             "ws_listen_ip",
             "remote_mode",
             "enable_webui",
-            "enable_webui_interaction",
             "debug",
             "mock",
-            "skip_plugin_load",
+            "load_plugin",
         }
         assert set(LEGAL_ARGS) == expected

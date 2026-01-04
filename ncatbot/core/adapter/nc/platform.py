@@ -126,7 +126,7 @@ class PlatformOps(ABC):
         if not self.is_napcat_installed():
             return self.install_napcat("install")
 
-        if not ncatbot_config.napcat.check_napcat_update:
+        if not ncatbot_config.napcat.enable_update_check:
             return True
 
         current = self.get_installed_version()
@@ -328,10 +328,6 @@ class LinuxOps(PlatformOps):
         if process.returncode != 0:
             LOG.error(f"启动失败，请检查目录 {LINUX_NAPCAT_DIR}")
             raise FileNotFoundError("napcat cli 可能没有被正确安装")
-
-        # 注册退出清理
-        if ncatbot_config.napcat.stop_napcat:
-            atexit.register(self.stop_napcat)
 
         if not self.is_napcat_running(uin):
             raise RuntimeError("napcat 启动失败")

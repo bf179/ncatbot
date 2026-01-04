@@ -1,5 +1,5 @@
 root: '管理员QQ号'
-bt_uin: '机器人QQ号'
+bot_uin: '机器人QQ号'
 debug: false
 github_proxy: null
 check_ncatbot_update: true

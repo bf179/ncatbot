@@ -28,7 +28,7 @@ def set_qq(qq: Optional[str] = None) -> str:
         print(error("两次输入的 QQ 号不一致!"))
         return set_qq()
 
-    config.bt_uin = qq
+    config.bot_uin = qq
     config.save()
     print(success(f"QQ 号已设置为 {qq}"))
     return qq
@@ -68,7 +68,7 @@ def show_config() -> None:
     from ncatbot.cli.utils.colors import header
 
     print(header("当前配置:"))
-    print(f"  机器人 QQ: {info(config.bt_uin)}")
+    print(f"  机器人 QQ: {info(config.bot_uin)}")
     print(f"  管理员 QQ: {info(config.root)}")
     print(f"  WebSocket URI: {info(config.napcat.ws_uri)}")
     print(f"  WebUI URI: {info(config.napcat.webui_uri)}")

@@ -209,7 +209,7 @@ class TestMain:
             patch("pkg_resources.get_distribution", return_value=mock_dist),
             patch("ncatbot.cli.main.config") as mock_config,
         ):
-            mock_config.bt_uin = "123456789"
+            mock_config.bot_uin = "123456789"
 
             from ncatbot.cli.main import main
 

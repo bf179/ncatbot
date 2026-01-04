@@ -28,7 +28,7 @@ LOG = get_log("Lifecycle")
 class StartArgs(TypedDict, total=False):
     """启动参数类型定义"""
 
-    bt_uin: Union[str, int]
+    bot_uin: Union[str, int]
     root: Optional[str]
     ws_uri: Optional[str]
     webui_uri: Optional[str]
@@ -37,10 +37,9 @@ class StartArgs(TypedDict, total=False):
     ws_listen_ip: Optional[str]
     remote_mode: Optional[bool]
     enable_webui: Optional[bool]
-    enable_webui_interaction: Optional[bool]
     debug: Optional[bool]
     mock: Optional[bool]
-    skip_plugin_load: Optional[bool]
+    load_plugin: Optional[bool]
 
 
 LEGAL_ARGS = StartArgs.__annotations__.keys()
@@ -69,6 +68,8 @@ class LifecycleManager:
 
     def _prepare_startup(self, **kwargs: Unpack[StartArgs]):
         """通用启动准备"""
+        self._test_mode = bool(kwargs.pop("mock", False))
+        
         for key, value in kwargs.items():
             if key not in LEGAL_ARGS:
                 raise NcatBotError(f"非法启动参数: {key}")
@@ -115,7 +116,7 @@ class LifecycleManager:
 
             # 3. 加载插件
             if self.plugin_loader:
-                if not self._skip_plugin_load:
+                if self._load_plugin:
                     await self.plugin_loader.load_external_plugins(
                         Path(ncatbot_config.plugin.plugins_dir).resolve()
                     )

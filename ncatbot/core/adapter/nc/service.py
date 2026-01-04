@@ -123,11 +123,10 @@ class NapCatService:
         # 跳过 WebUI 交互检查
         if (
             not ncatbot_config.napcat.enable_webui
-            and not ncatbot_config.enable_webui_interaction
         ):
             LOG.warning(
                 f"跳过基于 WebUI 交互的检查, "
-                f"请自行确保 NapCat 已登录正确的 QQ {ncatbot_config.bt_uin}"
+                f"请自行确保 NapCat 已登录正确的 QQ {ncatbot_config.bot_uin}"
             )
             return True
 
@@ -176,7 +175,7 @@ class NapCatService:
 
         # 配置并启动
         self.config.configure_all()
-        self.platform.start_napcat(str(ncatbot_config.bt_uin))
+        self.platform.start_napcat(str(ncatbot_config.bot_uin))
 
         # 登录流程
         self._handle_login()
@@ -185,7 +184,7 @@ class NapCatService:
         """处理登录流程"""
         nc = ncatbot_config.napcat
 
-        if nc.enable_webui and ncatbot_config.enable_webui_interaction:
+        if nc.enable_webui:
             # WebUI 交互模式
             if not self.is_service_ok(3):
                 LOG.info("登录中...")
@@ -194,10 +193,6 @@ class NapCatService:
                 LOG.info("连接成功")
             else:
                 LOG.info("快速登录成功, 跳过登录引导")
-        elif nc.enable_webui:
-            # WebUI 禁用交互
-            if not self.is_service_ok(15):
-                raise NcatBotError("禁用 WebUI 交互时, 必须手动登录")
         else:
             # 无 WebUI
             timeout = ncatbot_config.websocket_timeout

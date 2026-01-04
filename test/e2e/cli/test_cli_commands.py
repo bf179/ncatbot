@@ -112,7 +112,7 @@ class TestPluginCreateCommand:
         assert (plugin_dir / "__init__.py").exists()
 
         # 验证 manifest 内容
-        manifest_content = (plugin_dir / "manifest.toml").read_text()
+        manifest_content = (plugin_dir / "manifest.toml").read_text(encoding="utf-8")
         assert 'name = "e2e_test_plugin"' in manifest_content
         assert 'author = "TestAuthor"' in manifest_content
 

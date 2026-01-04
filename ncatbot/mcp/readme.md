@@ -17,7 +17,7 @@ bot_client = NcatBotClient(bot_qq="#填写机器人QQ号", admin_qq="#填写管�
 将双引号中带井号的文字改为对应的QQ号即可，可以在代码编辑界面使用CTRL+F搜索这一段文字。并在文件夹中找到config.yaml文件中找到以下代码：
 ```javascript
 root: '管理员QQ号'
-bt_uin: '机器人QQ号'
+bot_uin: '机器人QQ号'
 ```
 并重复上述操作。
 ### MCP配置

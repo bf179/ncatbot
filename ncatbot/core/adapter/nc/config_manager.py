@@ -32,7 +32,7 @@ class ConfigManager:
     @property
     def uin(self) -> str:
         """Bot QQ 号"""
-        return str(ncatbot_config.bt_uin)
+        return str(ncatbot_config.bot_uin)
 
     # ==================== 路径属性 ====================
 

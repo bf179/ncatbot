@@ -30,7 +30,7 @@ from ncatbot.utils import ncatbot_config as config
 def show_command_help(command_name: Optional[str] = None) -> None:
     """显示命令帮助信息"""
     if command_name is None:
-        show_help(config.bt_uin)
+        show_help(config.bot_uin)
         return
 
     # 检查是否是分类
@@ -77,7 +77,7 @@ def show_meta() -> None:
         print(f"{header('Python 版本:')} {info(sys.version.split()[0])}")
         print(f"{header('操作系统:')} {info(sys.platform)}")
         print(f"{header('工作目录:')} {info(os.getcwd())}")
-        print(f"{header('机器人 QQ:')} {info(config.bt_uin or '未设置')}")
+        print(f"{header('机器人 QQ:')} {info(config.bot_uin or '未设置')}")
     except (ImportError, Exception) as e:
         print(error(f"无法获取版本信息: {e}"))
 

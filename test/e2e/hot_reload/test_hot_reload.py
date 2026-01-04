@@ -127,12 +127,12 @@ class TestReloadEdgeCases:
         self, test_suite: E2ETestSuite, plugin_file
     ):
         """测试完成后文件恢复正常"""
-        original_content = plugin_file.read_text()
+        original_content = plugin_file.read_text(encoding="utf-8")
         assert 'MARKER_VALUE: str = "original"' in original_content
 
         modify_plugin_file(plugin_file, MODIFICATIONS)
 
-        modified_content = plugin_file.read_text()
+        modified_content = plugin_file.read_text(encoding="utf-8")
         assert 'MARKER_VALUE: str = "modified"' in modified_content
 
 
@@ -269,8 +269,7 @@ class TestCommandHotReload:
         # 5. 修改文件并重新加载
         test_suite.clear_call_history()
         modify_plugin_file(plugin_file, COMMAND_MODIFICATIONS)
-        plugin = await test_suite.register_plugin("reload_test_plugin")
-        assert plugin is not None
+        await asyncio.sleep(WAIT_TIME)
 
         # 6. 验证新的命令响应
         await test_suite.inject_group_message("/reload_test_cmd")

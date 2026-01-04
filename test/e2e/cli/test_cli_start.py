@@ -100,7 +100,7 @@ class TestStartErrorHandling:
             # run_backend_async 应该在连接失败时抛出异常
             with pytest.raises(Exception):
                 await asyncio.wait_for(
-                    client.run_backend_async(bt_uin="123456", mock=True),
+                    client.run_backend_async(bot_uin="123456", mock=True),
                     timeout=3.0,
                 )
         finally:

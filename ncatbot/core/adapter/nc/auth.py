@@ -116,7 +116,7 @@ class AuthHandler:
     def _handle_connection_error(self, error: Exception) -> None:
         """处理连接错误"""
         LOG.error("连接 WebUI 失败")
-        LOG.info("建议: 使用 bot.run(enable_webui_interaction=False) 跳过鉴权")
+        LOG.info("建议: 使用 bot.run(enable_webui=False) 跳过鉴权")
         LOG.info(traceback.format_exc())
         raise WebUIConnectionError(f"连接 WebUI 失败: {error}")
 
@@ -164,7 +164,7 @@ class AuthHandler:
         if not info:
             return LoginStatus.ABNORMAL
 
-        target_uin = str(ncatbot_config.bt_uin)
+        target_uin = str(ncatbot_config.bot_uin)
         current_uin = str(info.get("uin", ""))
         is_online = info.get("online", False)
 
@@ -189,7 +189,7 @@ class AuthHandler:
 
     def quick_login(self) -> bool:
         """尝试快速登录"""
-        uin = str(ncatbot_config.bt_uin)
+        uin = str(ncatbot_config.bot_uin)
         quick_list = self.get_quick_login_list()
         LOG.info(f"快速登录列表: {quick_list}")
 
@@ -237,7 +237,7 @@ class AuthHandler:
     @staticmethod
     def show_qrcode(url: str) -> None:
         """在终端显示二维码"""
-        LOG.info(f"二维码对应的 QQ 号: {ncatbot_config.bt_uin}")
+        LOG.info(f"二维码对应的 QQ 号: {ncatbot_config.bot_uin}")
         qr = qrcode.QRCode()
         qr.add_data(url)
         qr.print_ascii(invert=True)

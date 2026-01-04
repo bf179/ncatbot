@@ -17,7 +17,7 @@ class TestSetQQ:
             result = set_qq("123456789")
 
             assert result == "123456789"
-            assert mock_config.bt_uin == "123456789"
+            assert mock_config.bot_uin == "123456789"
             mock_config.save.assert_called_once()
 
     def test_set_qq_interactive(self, mock_config):
@@ -31,7 +31,7 @@ class TestSetQQ:
             result = set_qq()
 
             assert result == "987654321"
-            assert mock_config.bt_uin == "987654321"
+            assert mock_config.bot_uin == "987654321"
 
     def test_set_qq_invalid_input(self, mock_config, capsys):
         """测试非数字输入"""
@@ -103,6 +103,6 @@ class TestShowConfig:
             show_config()
 
             captured = capsys.readouterr()
-            assert "123456789" in captured.out  # bt_uin
+            assert "123456789" in captured.out  # bot_uin
             assert "987654321" in captured.out  # root
             assert "ws://localhost:3001" in captured.out

@@ -59,7 +59,7 @@ def handle_interactive_mode() -> None:
     print(header("输入 s 启动 NcatBot, 输入 q 退出 CLI"))
     while True:
         try:
-            cmd = input(f"{info('NcatBot')} ({success(config.bt_uin)})> ").strip()
+            cmd = input(f"{info('NcatBot')} ({success(config.bot_uin)})> ").strip()
             if not cmd:
                 continue
 
@@ -95,7 +95,7 @@ def main() -> None:
         sys.exit(1)
 
     # 检查 QQ 号是否设置
-    if config.bt_uin == config._default_bt_uin:
+    if config.bot_uin == config._default_bot_uin:
         print(warning("检测到 QQ 号未设置，请先设置 QQ 号"))
         set_qq()
 

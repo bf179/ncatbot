@@ -146,7 +146,7 @@ class Config(BaseModel):
     napcat: NapCatConfig = Field(default_factory=NapCatConfig)
     plugin: PluginConfig = Field(default_factory=PluginConfig)
 
-    bt_uin: str = DEFAULT_BOT_UIN
+    bot_uin: str = DEFAULT_BOT_UIN
     root: str = DEFAULT_ROOT
     debug: bool = False
     enable_webui_interaction: bool = True
@@ -155,7 +155,7 @@ class Config(BaseModel):
     skip_ncatbot_install_check: bool = False
     websocket_timeout: int = 15
 
-    @field_validator("bt_uin", "root", mode="before")
+    @field_validator("bot_uin", "root", mode="before")
     @classmethod
     def _coerce_to_str(cls, v) -> str:
         return str(v)
@@ -171,7 +171,7 @@ class Config(BaseModel):
 
     def is_default_uin(self) -> bool:
         """是否使用默认 QQ 号。"""
-        return self.bt_uin == DEFAULT_BOT_UIN
+        return self.bot_uin == DEFAULT_BOT_UIN
 
     def is_default_root(self) -> bool:
         """是否使用默认管理员 QQ 号。"""

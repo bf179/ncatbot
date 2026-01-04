@@ -62,11 +62,11 @@ class E2ETestSuite(PluginMixin, InjectorMixin, AssertionMixin):
         初始化测试套件
 
         Args:
-            bt_uin: 模拟的机器人 QQ 号
+            bot_uin: 模拟的机器人 QQ 号
             mock_server: MockServer 实例（可选，未提供时自动创建）
             port: MockServer 端口（仅在自动创建时使用）
         """
-        self._bt_uin = bt_uin
+        self._bot_uin = bot_uin
         self._mock_server = mock_server
         self._port = port
         self._client: Optional["BotClient"] = None
