@@ -12,7 +12,8 @@ from typing import Optional
 
 import qrcode
 
-from ....utils import NAPCAT_WEBUI_SALT, get_log, ncatbot_config, post_json
+from ncatbot.utils import NAPCAT_WEBUI_SALT, get_log, ncatbot_config
+from .utils import post_json
 
 LOG = get_log("ncatbot.core.adapter.nc.auth")
 

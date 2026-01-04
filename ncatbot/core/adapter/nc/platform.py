@@ -4,7 +4,6 @@
 使用工厂模式统一 Windows/Linux 平台的 NapCat 安装、启动、停止操作。
 """
 
-import atexit
 import json
 import os
 import platform
@@ -15,16 +14,14 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional
 
-from ....utils import (
+from ncatbot.utils import (
     INSTALL_SCRIPT_URL,
     LINUX_NAPCAT_DIR,
     WINDOWS_NAPCAT_DIR,
-    gen_url_with_proxy,
-    get_json,
     get_log,
     ncatbot_config,
 )
-from .utils import download_file, unzip_file
+from .utils import download_file, unzip_file, gen_url_with_proxy, get_json
 
 LOG = get_log("ncatbot.core.adapter.nc.platform")
 

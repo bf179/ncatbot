@@ -56,6 +56,7 @@ def manager(mock_services, event_bus):
         mock_cfg.plugin.plugins_dir = "plugins"
 
         manager = LifecycleManager(mock_services, event_bus, registry)
+        manager.plugin_loader = MagicMock()
         yield manager
 
         # Teardown: 确保测试后关闭
@@ -169,6 +170,7 @@ class TestLifecycleThreaded:
             instance.load_external_plugins = AsyncMock()
             instance.load_builtin_plugins = AsyncMock()
             instance.unload_all = AsyncMock()
+            instance.clear = MagicMock()
 
             # 调用同步方法
             api = manager.run_backend(mock=True, daemon=True)

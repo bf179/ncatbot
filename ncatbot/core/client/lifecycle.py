@@ -315,6 +315,7 @@ class LifecycleManager:
 
         触发后台任务的取消，清理由 _core_execution 的 finally 块完成。
         """
+        self.plugin_loader.clear()
         if not self._running:
             LOG.warning("Bot 未运行")
             return

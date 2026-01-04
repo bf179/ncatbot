@@ -11,7 +11,7 @@ from typing import Optional
 
 import websockets
 
-from ....utils import NcatBotError, get_log, ncatbot_config
+from ncatbot.utils import NcatBotError, get_log, ncatbot_config
 from .auth import AuthHandler, LoginStatus
 from .config_manager import ConfigManager
 from .platform import PlatformOps, UnsupportedPlatformError

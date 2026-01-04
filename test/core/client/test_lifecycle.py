@@ -160,7 +160,10 @@ class TestBotExit:
         from ncatbot.core.client.registry import EventRegistry
 
         registry = EventRegistry(event_bus)
-        return LifecycleManager(mock_services, event_bus, registry)
+        manager = LifecycleManager(mock_services, event_bus, registry)
+        manager.plugin_loader = MagicMock()
+        manager.plugin_loader.clear = MagicMock()
+        return manager
 
     def test_bot_exit_when_not_running(self, manager):
         """测试未运行时调用 bot_exit"""

@@ -92,7 +92,7 @@ class PluginLoader:
         await self._pre_first_load(path)
         LOG.info("从 %s 导入插件", path)
 
-        plugin_manifests = self._importer.get_plugin_manifests(path)
+        plugin_manifests = self._importer.get_plugin_manifests()
         self._resolver.build(plugin_manifests)
 
         load_order = self._resolver.resolve()
@@ -231,6 +231,12 @@ class PluginLoader:
             ):
                 return obj
         return None
+
+    def clear(self) -> None:
+        """清理加载器状态，卸载所有插件并重置索引和解析器。"""
+        self._importer._plugin_folders.clear()
+        self._resolver._graph.clear()
+        self._resolver._constraints.clear()
 
     # ------------------- Hook ------------------------
     async def _pre_first_load(self, plugin_root: Path):

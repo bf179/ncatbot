@@ -123,9 +123,6 @@ async def test_suite():
     4. 测试使用 register_plugin 来加载插件
     5. teardown 时恢复原始配置（在 suite.teardown 之前）
     """
-    # 清理可能残留的命令注册（从之前失败的测试残留）
-    # 这是必要的，因为 command_registry 是全局单例
-    command_registry.root_group.revoke_plugin("reload_test_plugin")
 
     # 重置插件文件到原始状态
     _reset_plugin_file()

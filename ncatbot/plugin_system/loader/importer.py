@@ -194,9 +194,7 @@ class _ModuleImporter:
                 return plugin_name
         return None
 
-    def get_plugin_manifests(self, plugin_root: Path) -> Dict[str, Dict]:
-        if not self._manifests:
-            raise ValueError("未索引任何插件")
+    def get_plugin_manifests(self) -> Dict[str, Dict]:
         return copy.copy(self._manifests)
 
     def unload_plugin_module(self, plugin_name: str) -> bool:
