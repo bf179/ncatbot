@@ -28,6 +28,7 @@ AI 适配器单元测试
   AI-26: MCP 工具加载与命名空间化（{server}_{tool}）
   AI-27: MCP 工具调用返回文本结果
   AI-28: MCP 单个服务器连接失败不影响其他服务器
+  AI-31: chat_text() 透传 mcp_servers / max_tool_calls 给 chat()
 """
 
 import asyncio
@@ -965,3 +966,28 @@ def test_cli_configure_mcp_stdio(monkeypatch):
             "env": {"TOKEN": "abc"},
         }
     }
+
+
+# ---- AI-31 ----
+
+
+@pytest.mark.asyncio
+async def test_chat_text_forwards_mcp_params():
+    """AI-31: chat_text() 透传 mcp_servers / max_tool_calls 给 chat()"""
+    cfg = AIConfig(completion_model="gpt-4")
+    api = AIBotAPI(cfg)
+
+    mock_resp = _make_response(content="北京天气晴朗", tool_calls=None)
+
+    with patch.object(api, "chat", new_callable=AsyncMock) as mock_chat:
+        mock_chat.return_value = mock_resp
+        result = await api.chat_text(
+            "北京天气如何?",
+            mcp_servers={"weather": {"url": "http://x"}},
+            max_tool_calls=5,
+        )
+
+    assert result == "北京天气晴朗"
+    call_kwargs = mock_chat.call_args.kwargs
+    assert call_kwargs["mcp_servers"] == {"weather": {"url": "http://x"}}
+    assert call_kwargs["max_tool_calls"] == 5

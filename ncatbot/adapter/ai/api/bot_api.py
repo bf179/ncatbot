@@ -331,6 +331,8 @@ class AIBotAPI(IAPIClient):
         temperature: Optional[float] = None,
         max_tokens: Optional[int] = None,
         nickname_map: Optional[Dict[str, str]] = None,
+        mcp_servers: Optional[Dict[str, dict]] = None,
+        max_tool_calls: int = 10,
         **kwargs: Any,
     ) -> str:
         """Chat Completion — 直接返回文本
@@ -343,6 +345,8 @@ class AIBotAPI(IAPIClient):
             temperature=temperature,
             max_tokens=max_tokens,
             nickname_map=nickname_map,
+            mcp_servers=mcp_servers,
+            max_tool_calls=max_tool_calls,
             **kwargs,
         )
         return resp.choices[0].message.content or ""
