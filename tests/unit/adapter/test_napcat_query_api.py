@@ -1,7 +1,7 @@
 """NapCat 查询 API 单元测试。
 
 规范:
-  NQ-01: get_forward_msg 使用 OneBot 标准 id 参数
+  NQ-01: get_forward_msg 使用 NapCat 规范的 message_id 参数
   NQ-02: get_forward_msg 保留超过 JavaScript 安全整数范围的完整 ID
 """
 
@@ -31,13 +31,13 @@ class TestNapCatQueryAPI:
     )
     @pytest.mark.asyncio
     async def test_nq01_get_forward_msg_preserves_long_id(self, message_id):
-        """NQ-01/02: 转发消息长 ID 始终通过字符串 id 原样传递。"""
+        """NQ-01/02: 转发消息长 ID 始终通过字符串 message_id 原样传递。"""
         api = _FakeQueryMixin()
 
         result = await api.get_forward_msg(message_id)
 
         api._call_data.assert_awaited_once_with(
             "get_forward_msg",
-            {"id": "7672696335120716277"},
+            {"message_id": "7672696335120716277"},
         )
         assert result.messages == []
