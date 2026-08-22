@@ -10,6 +10,8 @@ session 绑定、取消词检测、超时处理和自动回复等常用模式。
 """
 
 import asyncio
+
+#新增cast引入
 from typing import (
     Callable,
     Dict,
@@ -18,6 +20,7 @@ from typing import (
     Sequence,
     Union,
     TYPE_CHECKING,
+    cast
 )
 
 from ncatbot.utils import get_log
@@ -28,7 +31,10 @@ if TYPE_CHECKING:
     from ncatbot.core import AsyncEventDispatcher, Event, EventStream, P
     from ncatbot.types.qq import EventType
 
+#新增事件类型引入
+from ncatbot.event.qq.message import GroupMessageEvent,PrivateMessageEvent
 LOG = get_log("EventMixin")
+
 
 
 class EventMixin:
@@ -85,6 +91,79 @@ class EventMixin:
             asyncio.TimeoutError: 超时未匹配到事件
         """
         return await self._dispatcher.wait_event(predicate, timeout)
+
+    #新增：内建的wait_group_message类型
+    async def wait_group_message_event(
+            self,
+            predicate: Optional[Callable[[GroupMessageEvent],bool]] = None,
+            timeout: Optional[float] = None,
+    ) -> GroupMessageEvent:
+        """等待下一个满足条件的群聊消息事件,封装wait_event
+
+        Args:
+            predicate: 针对群聊消息的过滤函数，None 表示接受任意事件
+            timeout: 超时秒数，None 表示无限等待
+
+        Returns:
+            匹配的 GroupMessageEvent
+
+        Raises:
+            asyncio.TimeoutError: 超时未匹配到事件
+            注：这个抛出来自于底层的wait_event
+        """
+
+        #包装群组的过滤函数
+        def wrapper_predicate(e: "Event") -> bool:
+            if not isinstance(e, GroupMessageEvent):
+                return False
+
+            #要是用户传入自己的包装器就返回它的判断就好啦
+            if predicate is not None:
+                return predicate(e)
+            
+            return True
+
+        event = await self.wait_event(wrapper_predicate, timeout)
+        #用cast强制转换，这样ide就可以自己推断类型
+        return cast(GroupMessageEvent, event)
+        
+    #新增：内建的wait_private_message类型
+    async def wait_private_message_event(
+            self,
+            predicate: Optional[Callable[[PrivateMessageEvent], bool]] = None,
+            timeout: Optional[float] = None,
+    ) -> PrivateMessageEvent:
+        """等待下一个满足条件的私聊消息事件,封装wait_event
+
+        Args:
+            predicate: 针对私聊消息的过滤函数，None 表示接受任意事件
+            timeout: 超时秒数，None 表示无限等待
+
+        Returns:
+            匹配的 PrivateMessageEvent
+
+        Raises:      
+            asyncio.TimeoutError: 超时未匹配到事件
+            注：这个抛出来自于底层的wait_event
+        """
+        #手法包装私聊过滤函数
+        def wrapper_predicate(e: "Event") -> bool:
+            if not isinstance(e, PrivateMessageEvent):
+                return False
+
+            if predicate is not None:
+                return predicate(e)
+
+            return True
+
+        
+        event = await self.wait_event(wrapper_predicate, timeout)
+
+        #用cast强制转换，这样ide就可以自己推断类型
+        return cast(PrivateMessageEvent, event)
+
+
+
 
     # ------------------------------------------------------------------
     # Session 便利方法
