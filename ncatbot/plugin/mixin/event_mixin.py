@@ -10,6 +10,8 @@ session 绑定、取消词检测、超时处理和自动回复等常用模式。
 """
 
 import asyncio
+
+# 新增cast引入,Type引入,TypeVar引入
 from typing import (
     Callable,
     Dict,
@@ -18,8 +20,10 @@ from typing import (
     Sequence,
     Union,
     TYPE_CHECKING,
+    cast,
+    TypeVar,
+    Type,
 )
-
 from ncatbot.utils import get_log
 
 from .session_types import SessionCancelled, SessionResult
@@ -28,7 +32,15 @@ if TYPE_CHECKING:
     from ncatbot.core import AsyncEventDispatcher, Event, EventStream, P
     from ncatbot.types.qq import EventType
 
+# 新增事件类型引入,引入事件工厂
+from ncatbot.event.qq.message import GroupMessageEvent, PrivateMessageEvent
+from ncatbot.event.qq.factory import create_qq_entity
+from ncatbot.api.qq.client import IQQAPIClient
+
 LOG = get_log("EventMixin")
+
+# 定义泛型 TypeVar
+EventT = TypeVar("EventT")
 
 
 class EventMixin:
@@ -85,6 +97,89 @@ class EventMixin:
             asyncio.TimeoutError: 超时未匹配到事件
         """
         return await self._dispatcher.wait_event(predicate, timeout)
+
+    # 新增：将类型过滤、事件实体转换和 predicate 调用抽取为内部通用包装方法
+    async def _wait_entity(
+        self,
+        event_type: Type[EventT],
+        predicate: Optional[Callable[[EventT], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> EventT:
+        """
+        内部通用等待实体方法：
+        进行过滤类型与数据转换，运行 predicate 断言
+        支持精确泛型推导返回
+        """
+        matched_entity: Optional[EventT] = None
+
+        def _check(raw_event: Event) -> bool:
+            nonlocal matched_entity
+
+            # 通过现有事件工厂将 Event.data 转换成真实事件实体
+            api_client = cast(IQQAPIClient, getattr(self, "api", self))
+            entity = create_qq_entity(raw_event.data, api_client)
+
+            # isinstance 判断
+            if entity is None or not isinstance(entity, event_type):
+                return False
+            if predicate is not None:
+                return predicate(entity)
+
+            matched_entity = entity
+            return True
+
+        # 调用底层 wait_event
+        raw_event: Event = await self.wait_event(_check, timeout=timeout)
+
+        # 返回符合条件的实例
+        if matched_entity is not None:
+            return matched_entity
+
+        api_client = api_client = cast(IQQAPIClient, getattr(self, "api", self))
+
+        return cast(EventT, create_qq_entity(raw_event.data, api_client))
+
+    # 新增：内建的wait_group_message类型
+    async def wait_group_message_event(
+        self,
+        predicate: Optional[Callable[[GroupMessageEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> GroupMessageEvent:
+        """等待下一个满足条件的群聊消息事件,封装wait_event
+
+        Args:
+            predicate: 针对群聊消息的过滤函数，None 表示接受任意事件
+            timeout: 超时秒数，None 表示无限等待
+
+        Returns:
+            匹配的 GroupMessageEvent
+        """
+
+        # 统一调用 _wait_entity
+        return await self._wait_entity(
+            GroupMessageEvent, predicate=predicate, timeout=timeout
+        )
+
+    # 新增：内建的wait_private_message类型
+    async def wait_private_message_event(
+        self,
+        predicate: Optional[Callable[[PrivateMessageEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> PrivateMessageEvent:
+        """等待下一个满足条件的私聊消息事件,封装wait_event
+
+        Args:
+            predicate: 针对私聊消息的过滤函数，None 表示接受任意事件
+            timeout: 超时秒数，None 表示无限等待
+
+        Returns:
+            匹配的 PrivateMessageEvent
+        """
+
+        # 统一调用 _wait_entity
+        return await self._wait_entity(
+            PrivateMessageEvent, predicate=predicate, timeout=timeout
+        )
 
     # ------------------------------------------------------------------
     # Session 便利方法
