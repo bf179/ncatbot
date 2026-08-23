@@ -1326,7 +1326,7 @@ wheels = [
 
 [[package]]
 name = "ncatbot5"
-version = "5.5.7"
+version = "5.5.8"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
